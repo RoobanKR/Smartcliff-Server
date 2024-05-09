@@ -1,6 +1,10 @@
 const Batches = require("../models/BatchesModal");
-const path = require("path");
-const fs = require("fs");
+const { createClient } = require('@supabase/supabase-js');
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 
 exports.createBatches = async (req, res) => {
   try {
@@ -29,7 +33,7 @@ exports.createBatches = async (req, res) => {
         .json({ message: [{ key: "error", value: "Required fields" }] });
     }
 
-    let imageFile = req.files.image;
+    const imageFile = req.files?.image;
 
     if (!imageFile) {
       return res.status(400).json({
@@ -42,23 +46,29 @@ exports.createBatches = async (req, res) => {
         message: [
           {
             key: "error",
-            value: "Batches image size exceeds the 3MB limit",
+            value: "Batches image size exceeds the 5MB limit",
           },
         ],
       });
     }
 
     const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-    const uploadPath = path.join(
-      __dirname,
-      "../uploads/batches",
-      uniqueFileName
-    );
 
     try {
-      await imageFile.mv(uploadPath);
+      const { data, error } = await supabase.storage
+        .from('SmartCliff/courses/batches')
+        .upload(uniqueFileName, imageFile.data);
 
-      const newbranch = new Batches({
+      if (error) {
+        console.error("Error uploading image to Supabase:", error);
+        return res.status(500).json({
+          message: [{ key: "error", value: "Error uploading image to Supabase" }],
+        });
+      }
+
+      const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/courses/batches/${uniqueFileName}`;
+
+      const newBatch = new Batches({
         category,
         course,
         branch,
@@ -67,32 +77,33 @@ exports.createBatches = async (req, res) => {
         start_date,
         duration,
         contact,
-        image: uniqueFileName,
+        image: imageUrl,
       });
 
-      await newbranch.save();
+      await newBatch.save();
 
       return res.status(201).json({
         message: [
           {
-            key: "Success",
-            value: "Batches Added Successfully",
+            key: "success",
+            value: "Batch created successfully",
           },
         ],
       });
     } catch (error) {
-      console.error("Error moving the Batches Image file:", error);
+      console.error("Error saving batch:", error);
       return res
         .status(500)
         .json({ message: [{ key: "error", value: "Internal server error" }] });
     }
   } catch (error) {
-    console.error(error);
+    console.error("Error creating batch:", error);
     return res
       .status(500)
       .json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };
+
 
 exports.getAllBatches = async (req, res) => {
   try {
@@ -106,30 +117,21 @@ exports.getAllBatches = async (req, res) => {
       })
       .populate("category");
 
-    const batchesWithImageUrls = batches.map((batch) => {
-      return {
-        ...batch.toObject(),
-        image: batch.image
-          ? process.env.BACKEND_URL + "/uploads/batches/" + batch.image
-          : null,
-      };
-    });
-
     return res.status(200).json({
-      message: [{ key: "success", value: "Batches Retrieved successfully" }],
-      All_batches: batchesWithImageUrls,
+      message: [{ key: "success", value: "Batches retrieved successfully" }],
+      All_batches:batches
     });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: [{ key: "error", value: "Internal server error" }] });
+    console.error("Error retrieving batches:", error);
+    return res.status(500).json({
+      message: [{ key: "error", value: "Internal server error" }],
+    });
   }
 };
 
 exports.getBatchesById = async (req, res) => {
   try {
     const { id } = req.params;
-
     const batch = await Batches.findById(id)
       .populate({
         path: "course",
@@ -146,24 +148,15 @@ exports.getBatchesById = async (req, res) => {
       });
     }
 
-    const batchWithImageUrl = {
-      ...batch.toObject(),
-      image: batch.image
-        ? process.env.BACKEND_URL + "/uploads/batches/" + batch.image
-        : null,
-    };
-
     return res.status(200).json({
-      message: [
-        { key: "success", value: "Batch Id Based Retrieved Successfully" },
-      ],
-      batch_Id_Base: batchWithImageUrl,
+      message: [{ key: "success", value: "Batch retrieved successfully" }],
+      batch_Id_Base: batch
     });
   } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ message: [{ key: "error", value: "Internal server error" }] });
+    console.error("Error retrieving batch by ID:", error);
+    return res.status(500).json({
+      message: [{ key: "error", value: "Internal server error" }],
+    });
   }
 };
 
@@ -171,56 +164,58 @@ exports.updateBatches = async (req, res) => {
   try {
     const batchId = req.params.id;
     const updatedData = req.body;
-    const imageFile = req.files ? req.files.image : null;
+    const imageFile = req.files?.image;
 
-    const existingbatches = await Batches.findById(batchId);
+    const existingBatch = await Batches.findById(batchId);
 
-    if (!existingbatches) {
+    if (!existingBatch) {
       return res.status(404).json({
-        message: [{ key: "error", value: "Batches not found" }],
+        message: [{ key: "error", value: "Batch not found" }],
       });
     }
 
     if (imageFile) {
-      const imagePathToDelete = path.join(
-        __dirname,
-        "../uploads/batches",
-        existingbatches.image
-      );
-      if (fs.existsSync(imagePathToDelete)) {
-        fs.unlink(imagePathToDelete, (err) => {
-          if (err) {
-            console.error("Error deleting image:", err);
+      if (existingBatch.image) {
+          try {
+              const imageUrlParts = existingBatch.image.split('/');
+              const imageName = imageUrlParts[imageUrlParts.length - 1];
+
+              const {data,error} =  await supabase.storage
+              .from('SmartCliff')
+              .remove(`courses/batches/${[imageName]}`);
+             
+          } catch (error) {
+              console.error(error);
+              return res.status(500).json({ message: [{ key: "error", value: "Error removing existing image from Supabase storage" }] });
           }
-        });
       }
 
       const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-      const uploadPath = path.join(
-        __dirname,
-        "../uploads/batches",
-        uniqueFileName
-      );
-      await imageFile.mv(uploadPath);
-      updatedData.image = uniqueFileName;
-    }
 
-    const updatedBatches = await Batches.findByIdAndUpdate(
-      batchId,
-      updatedData
-    );
+      try {
+          const { data, error } = await supabase.storage
+              .from('SmartCliff/courses/batches')
+              .upload(uniqueFileName, imageFile.data);
 
-    if (!updatedBatches) {
-      return res.status(404).json({
-        message: [{ key: "error", value: "Batches not found" }],
-      });
-    }
+          if (error) {
+              console.error(error);
+              return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
+          }
+
+          const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/courses/batches/${uniqueFileName}`;
+          updatedData.image = imageUrl;
+      } catch (error) {
+          console.error(error);
+          return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
+      }
+  }
+
+    const updatedBatch = await Batches.findByIdAndUpdate(batchId, updatedData, { new: true });
 
     return res.status(200).json({
-      message: [{ key: "success", value: "Batches updated successfully" }],
-    });
+      message: [{ key: "success", value: "Batch updated successfully" }]});
   } catch (error) {
-    console.error(error);
+    console.error("Error updating batch:", error);
     return res.status(500).json({
       message: [{ key: "error", value: "Internal server error" }],
     });
@@ -228,33 +223,38 @@ exports.updateBatches = async (req, res) => {
 };
 
 exports.deleteBatches = async (req, res) => {
-  const { id } = req.params;
-
   try {
-    const batches = await Batches.findById(id);
-    if (!batches) {
-      return res
-        .status(404)
-        .json({ message: [{ key: "error", value: "Batches not found" }] });
+    const { id } = req.params;
+    const batch = await Batches.findById(id);
+
+    if (!batch) {
+      return res.status(404).json({
+        message: [{ key: "error", value: "Batch not found" }],
+      });
     }
 
-    if (batches.image) {
-      const imagePath = path.join(
-        __dirname,
-        "../uploads/batches",
-        batches.image
-      );
-      fs.unlinkSync(imagePath);
+    if (batch.image) {
+      const imageUrlParts = batch.image.split('/');
+      const imageName = imageUrlParts[imageUrlParts.length - 1];
+
+      try {
+        await supabase.storage
+        .from('SmartCliff')
+        .remove(`courses/batches/${[imageName]}`);
+      } catch (error) {
+        console.error("Error deleting image from Supabase:", error);
+      }
     }
+
     await Batches.findByIdAndDelete(id);
 
     return res.status(200).json({
-      message: [{ key: "success", value: "Batches deleted successfully" }],
+      message: [{ key: "success", value: "Batch deleted successfully" }],
     });
   } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ message: [{ key: "error", value: "Internal server error" }] });
+    console.error("Error deleting batch:", error);
+    return res.status(500).json({
+      message: [{ key: "error", value: "Internal server error" }],
+    });
   }
 };

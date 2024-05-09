@@ -2,6 +2,8 @@ const mongoose = require('mongoose')
 
 const courseSchema = new mongoose.Schema({
   course_id: { type: String, required: true, unique: true },
+  slug: { type: String, required: true },
+
   course_name: { type: String, required: true },
   short_description: { type: String, required: true },
 	objective: { type: String, required: true },

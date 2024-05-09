@@ -19,7 +19,6 @@ const entrollBatchRoutes = require("./routes/entrollBatchRoutes");
 
 const degreeProgramRoutes = require("./routes/degreeProgram/degreeProgramRoutes");
 const ourProgramRoutes = require("./routes/degreeProgram/ourProgramRoutes");
-const assesmentRoutes = require("./routes/degreeProgram/assesmentRoutes");
 const admissionProcessRoutes = require("./routes/degreeProgram/admissionProcessRoutes");
 const programMentorRoutes = require("./routes/degreeProgram/programMentorRoutes");
 const programFeesRoutes = require("./routes/degreeProgram/programFeesRoutes");
@@ -38,6 +37,14 @@ const serviceTestimonialRoutes = require("./routes/services/serviceTestimonialRo
 const serviceGalleryRoutes = require("./routes/services/galleryRoutes");
 const managedCampusRoutes = require("./routes/services/managedCampusRoutes");
 
+// hiring
+const hiringRoutes = require("./routes/hiring/hiringRoutes");
+const hireFromUsRoutes = require("./routes/hiring/hireFromUsRoutes");
+const hiringApplyRoutes = require("./routes/hiring/hiringApplyRoutes");
+const trainFromUsRoutes = require("./routes/hiring/trainFromUsRoutes");
+const instituteRoutes = require("./routes/hiring/instituteFormRoutes");
+
+
 const path = require("path");
 
 // Connect Database
@@ -50,6 +57,7 @@ app.use(
     //origin: ["http://localhost:3000", "http://localhost:3535"],
     origin: [
       "http://localhost:3000",
+      "https://smart-cliff-next-js-fkpr-roobankrs-projects.vercel.app",
       "http://localhost:3535",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
@@ -74,63 +82,63 @@ app.use(
   "/uploads/super_admin",
   express.static(path.join(__dirname, "uploads/super_admin"))
 );
-app.use(
-  "/uploads/category",
-  express.static(path.join(__dirname, "uploads/category"))
-);
-app.use(
-  "/uploads/career_opportunities",
-  express.static(path.join(__dirname, "uploads/career_opportunities"))
-);
-app.use(
-  "/uploads/tool_software",
-  express.static(path.join(__dirname, "uploads/tool_software"))
-);
-app.use(
-  "/uploads/instructor",
-  express.static(path.join(__dirname, "uploads/instructor"))
-);
-app.use(
-  "/uploads/course",
-  express.static(path.join(__dirname, "uploads/course"))
-);
-app.use(
-  "/uploads/batches",
-  express.static(path.join(__dirname, "uploads/batches"))
-);
-app.use(
-  "/uploads/mca/degree_Program",
-  express.static(path.join(__dirname, "/uploads/mca/degree_Program"))
-);
-app.use(
-  "/uploads/mca/our_program",
-  express.static(path.join(__dirname, "/uploads/mca/our_program"))
-);
-app.use(
-  "/uploads/mca/assesment",
-  express.static(path.join(__dirname, "/uploads/mca/assesment"))
-);
+// app.use(
+//   "/uploads/category",
+//   express.static(path.join(__dirname, "uploads/category"))
+// );
+// app.use(
+//   "/uploads/career_opportunities",
+//   express.static(path.join(__dirname, "uploads/career_opportunities"))
+// );
+// app.use(
+//   "/uploads/tool_software",
+//   express.static(path.join(__dirname, "uploads/tool_software"))
+// );
+// app.use(
+//   "/uploads/instructor",
+//   express.static(path.join(__dirname, "uploads/instructor"))
+// );
+// app.use(
+//   "/uploads/course",
+//   express.static(path.join(__dirname, "uploads/course"))
+// );
+// app.use(
+//   "/uploads/batches",
+//   express.static(path.join(__dirname, "uploads/batches"))
+// );
+// app.use(
+//   "/uploads/mca/degree_Program",
+//   express.static(path.join(__dirname, "/uploads/mca/degree_Program"))
+// );
+// app.use(
+//   "/uploads/mca/our_program",
+//   express.static(path.join(__dirname, "/uploads/mca/our_program"))
+// );
+// app.use(
+//   "/uploads/mca/assesment",
+//   express.static(path.join(__dirname, "/uploads/mca/assesment"))
+// );
 
-app.use(
-  "/uploads/mca/program_mentor",
-  express.static(path.join(__dirname, "/uploads/mca/program_mentor"))
-);
-app.use(
-  "/uploads/mca/program_fees",
-  express.static(path.join(__dirname, "/uploads/mca/program_fees"))
-);
-app.use(
-  "/uploads/mca/eligibility_criteria",
-  express.static(path.join(__dirname, "/uploads/mca/eligibility_criteria"))
-);
-app.use(
-  "/uploads/mca/outcome",
-  express.static(path.join(__dirname, "/uploads/mca/outcome"))
-);
-app.use(
-  "/uploads/program_apply",
-  express.static(path.join(__dirname, "uploads/program_apply"))
-);
+// app.use(
+//   "/uploads/mca/program_mentor",
+//   express.static(path.join(__dirname, "/uploads/mca/program_mentor"))
+// );
+// app.use(
+//   "/uploads/mca/program_fees",
+//   express.static(path.join(__dirname, "/uploads/mca/program_fees"))
+// );
+// app.use(
+//   "/uploads/mca/eligibility_criteria",
+//   express.static(path.join(__dirname, "/uploads/mca/eligibility_criteria"))
+// );
+// app.use(
+//   "/uploads/mca/outcome",
+//   express.static(path.join(__dirname, "/uploads/mca/outcome"))
+// );
+// app.use(
+//   "/uploads/program_apply",
+//   express.static(path.join(__dirname, "uploads/program_apply"))
+// );
 
 // Services
 app.use(
@@ -141,22 +149,22 @@ app.use(
   "/uploads/services/service/videos",
   express.static(path.join(__dirname, "uploads/services/service/videos"))
 );
-app.use(
-  "/uploads/services/company_logo",
-  express.static(path.join(__dirname, "uploads/services/company_logo"))
-);
-app.use(
-  "/uploads/services/execution_highlights",
-  express.static(path.join(__dirname, "uploads/services/execution_highlights"))
-);
-app.use(
-  "/uploads/services/testimonial",
-  express.static(path.join(__dirname, "uploads/services/testimonial"))
-);
-app.use(
-  "/uploads/services/gallery",
-  express.static(path.join(__dirname, "uploads/services/gallery"))
-);
+// app.use(
+//   "/uploads/services/company_logo",
+//   express.static(path.join(__dirname, "uploads/services/company_logo"))
+// );
+// app.use(
+//   "/uploads/services/execution_highlights",
+//   express.static(path.join(__dirname, "uploads/services/execution_highlights"))
+// );
+// app.use(
+//   "/uploads/services/testimonial",
+//   express.static(path.join(__dirname, "uploads/services/testimonial"))
+// );
+// app.use(
+//   "/uploads/services/gallery",
+//   express.static(path.join(__dirname, "uploads/services/gallery"))
+// );
 //Home route
 app.get("/", (req, res) => res.send("API Running"));
 
@@ -172,7 +180,6 @@ app.use("/",instructorRoutes);
 app.use("/",courseRoutes);
 app.use("/",degreeProgramRoutes);
 app.use("/",ourProgramRoutes);
-app.use("/",assesmentRoutes);
 app.use("/",admissionProcessRoutes);
 app.use("/",programMentorRoutes);
 app.use("/",programFeesRoutes);
@@ -190,9 +197,16 @@ app.use("/", serviceTestimonialRoutes)
 app.use("/", serviceGalleryRoutes)
 app.use("/", managedCampusRoutes)
 app.use("/",entrollBatchRoutes);
-
-
 app.use("/", batchesRoutes)
+
+// hiring
+app.use("/",hiringRoutes);
+app.use("/",hireFromUsRoutes);
+app.use("/",hiringApplyRoutes);
+app.use("/",trainFromUsRoutes);
+app.use("/",instituteRoutes);
+
+
 
 
 

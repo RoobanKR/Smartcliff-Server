@@ -1,6 +1,9 @@
 const ProgramFees = require("../../models/degreeprogram/ProgramFessModal");
-const path = require("path");
-const fs = require('fs');
+const { createClient } = require('@supabase/supabase-js');
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 exports.createProgramFees = async (req, res) => {
     try {
@@ -15,56 +18,70 @@ exports.createProgramFees = async (req, res) => {
             return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
         }
 
-        let iconFile = req.files.icon;
+        const iconFile = req.files?.icon;
 
-        if (!iconFile) {
-            return res.status(400).json({ message: [{ key: "error", value: "Program Fees icon is required" }] });
-        }
+    if (!iconFile) {
+      return res.status(400).json({
+        message: [{ key: "error", value: "Batches icon is required" }],
+      });
+    }
 
-        if (iconFile.size > 5 * 1024 * 1024) {
-            return res.status(400).json({ message: [{ key: "error", value: "Program Fees icon size exceeds the 3MB limit" }] });
-        }
+    if (iconFile.size > 5 * 1024 * 1024) {
+      return res.status(400).json({
+        message: [
+          {
+            key: "error",
+            value: "Batches icon size exceeds the 5MB limit",
+          },
+        ],
+      });
+    }
 
-        const uniqueFileName = `${Date.now()}_${iconFile.name}`;
-        const uploadPath = path.join(__dirname, "../../uploads/mca/program_fees", uniqueFileName);
+    const uniqueFileName = `${Date.now()}_${iconFile.name}`;
 
-        try {
-            await iconFile.mv(uploadPath);
+    try {
+      const { data, error } = await supabase.storage
+        .from('SmartCliff/degreeProgram/program_fees')
+        .upload(uniqueFileName, iconFile.data);
+
+      if (error) {
+        console.error("Error uploading icon to Supabase:", error);
+        return res.status(500).json({
+          message: [{ key: "error", value: "Error uploading icon to Supabase" }],
+        });
+      }
+
+      const iconUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/degreeProgram/program_fees/${uniqueFileName}`;
 
             const newProgramFees = new ProgramFees({
                 title,
                 description,
-                icon: uniqueFileName,
+                icon: iconUrl,
                 degree_program
             });
 
             await newProgramFees.save();
 
             return res.status(201).json({ message: [{ key: "Success", value: "Program Fees Added Successfully" }] });
+          } catch (error) {           
+          }
         } catch (error) {
-            return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
+          return res
+            .status(500)
+            .json({ message: [{ key: "error", value: "Internal server error" }] });
         }
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
-    }
-};
-
+      };
+      
 
 exports.getAllProgramFees = async (req, res) => {
     try {
       const programFees = await ProgramFees.find().populate("degree_program");
   
-      const programFeess = programFees.map((program) => {
-        return {
-          ...program.toObject(),
-          icon: program.icon ? process.env.BACKEND_URL + '/uploads/mca/program_fees/' + program.icon : null,
-        };
-      });
+     
   
       return res.status(200).json({
         message: [{ key: 'success', value: 'Program Fees Retrieved successfully' }],
-        program_feess: programFeess,
+        program_feess: programFees,
       });
     } catch (error) {
       return res.status(500).json({ message: [{ key: 'error', value: 'Internal server error' }] });
@@ -78,13 +95,9 @@ exports.getAllProgramFees = async (req, res) => {
       if (!programFees) {
         return res.status(404).json({ message: [{ key: 'error', value: 'Program Fees not found' }] });
       }
-      const iconURL = programFees.icon ? `${process.env.BACKEND_URL}/uploads/mca/program_fees/${programFees.icon}` : null;
       return res.status(200).json({
         message: [{ key: 'success', value: 'Program Fees Retrieved successfully' }],
-        programFeesById: {
-          ...programFees.toObject(),
-          icon: iconURL,
-        },
+        programFeesById:programFees
       });
     } catch (error) {
       console.error(error);
@@ -110,28 +123,40 @@ exports.getAllProgramFees = async (req, res) => {
       }
   
       if (iconFile) {
-        const iconPathToDelete = path.join(
-          __dirname,
-          '../../uploads/mca/program_fees',
-          existingProgramFees.icon
-        );
-        if (fs.existsSync(iconPathToDelete)) {
-          fs.unlink(iconPathToDelete, (err) => {
-            if (err) {
-              console.error('Error deleting icon:', err);
+        if (existingProgramFees.icon) {
+            try {
+                const iconUrlParts = existingProgramFees.icon.split('/');
+                const iconName = iconUrlParts[iconUrlParts.length - 1];
+  
+                const {data,error} =  await supabase.storage
+                .from('SmartCliff')
+                .remove(`degreeProgram/program_fees/${[iconName]}`);
+               
+            } catch (error) {
+                console.error(error);
+                return res.status(500).json({ message: [{ key: "error", value: "Error removing existing icon from Supabase storage" }] });
             }
-          });
         }
   
         const uniqueFileName = `${Date.now()}_${iconFile.name}`;
-        const uploadPath = path.join(
-          __dirname,
-          '../../uploads/mca/program_fees',
-          uniqueFileName
-        );
-        await iconFile.mv(uploadPath);
-        updatedData.icon = uniqueFileName;
-      }
+  
+        try {
+            const { data, error } = await supabase.storage
+                .from('SmartCliff/degreeProgram/program_fees')
+                .upload(uniqueFileName, iconFile.data);
+  
+            if (error) {
+                console.error(error);
+                return res.status(500).json({ message: [{ key: "error", value: "Error uploading icon to Supabase storage" }] });
+            }
+  
+            const iconUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/degreeProgram/program_fees/${uniqueFileName}`;
+            updatedData.icon = iconUrl;
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: [{ key: "error", value: "Error uploading icon to Supabase storage" }] });
+        }
+    }
   
       const updatedProgramFees = await ProgramFees.findByIdAndUpdate(
         feesId,
@@ -164,9 +189,18 @@ exports.getAllProgramFees = async (req, res) => {
       }
   
       if (programFees.icon) {
-        const iconPath = path.join(__dirname, '../../uploads/mca/program_fees', programFees.icon);
-        fs.unlinkSync(iconPath);
+        const iconUrlParts = programFees.icon.split('/');
+        const iconName = iconUrlParts[iconUrlParts.length - 1];
+  
+        try {
+          await supabase.storage
+          .from('SmartCliff')
+          .remove(`degreeProgram/program_fees/${[iconName]}`);
+        } catch (error) {
+          console.error("Error deleting icon from Supabase:", error);
+        }
       }
+  
         await ProgramFees.findByIdAndDelete(id);
   
       return res.status(200).json({

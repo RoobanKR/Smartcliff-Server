@@ -10,8 +10,8 @@ router.get('/getAll/batches', getAllBatches);
 
 router.get('/getById/batches/:id', getBatchesById);
 
-router.delete('/delete/batches/:id', userAuth,userRole(['admin', 'super_admin']),deleteBatches);
+router.delete('/delete/batches/:id',deleteBatches);
 
-router.put('/update/batches/:id',userAuth,userRole(['admin', 'super_admin']), updateBatches);
+router.put('/update/batches/:id', updateBatches);
 
-module.exports = router;
+module.exports = router;    

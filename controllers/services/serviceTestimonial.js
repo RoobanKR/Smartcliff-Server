@@ -1,7 +1,10 @@
 const Testimonial = require("../../models/services/ServiceTestimonialModal");
-const path = require("path");
-const fs = require('fs');
 
+const { createClient } = require('@supabase/supabase-js');
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 exports.createTestimonial = async (req, res) => {
     try {
         const { name, review,service,stack } = req.body;
@@ -10,25 +13,29 @@ exports.createTestimonial = async (req, res) => {
             return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
         }
 
-        const imageFile = req.files.image;
+        if (!name || !req.files.image) {
+          return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
+      }
 
-        if (!imageFile) {
-            return res.status(400).json({ message: [{ key: "error", value: "Testimonial image is required" }] });
-        }
+      const imageFile = req.files.image;
+      const uniqueFileName = `${Date.now()}_${imageFile.name}`;
 
-        if (imageFile.size > 5 * 1024 * 1024) {
-            return res.status(400).json({ message: [{ key: "error", value: "Testimonial image size exceeds the 3MB limit" }] });
-        }
+      try {
+          const { data, error } = await supabase.storage
+          .from('SmartCliff/services/testimonial')
+          .upload(uniqueFileName, imageFile.data);
 
-        const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-        const uploadPath = path.join(__dirname, "../../uploads/services/testimonial", uniqueFileName);
+          if (error) {
+              console.error(error);
+              return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
+          }
 
-        await imageFile.mv(uploadPath);
+          const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/services/testimonial/${uniqueFileName}`;
 
         const newTestimonial = new Testimonial({
             name,
             review,
-            image: uniqueFileName,
+            image: imageUrl,
             service,
             stack
         });
@@ -39,24 +46,22 @@ exports.createTestimonial = async (req, res) => {
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
+      }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
     }
 };
-
 
 exports.getAllTestimonial = async (req, res) => {
     try {
       const testimonial = await Testimonial.find().populate("service").populate("stack");
   
-      const allTestimonial = testimonial.map((testimonials) => {
-        return {
-          ...testimonials.toObject(),
-          image: testimonials.image ? process.env.BACKEND_URL + '/uploads/services/testimonial/' + testimonials.image : null,
-        };
-      });
+
   
       return res.status(200).json({
         message: [{ key: 'success', value: 'Testimonial Retrieved successfully' }],
-        getAllTestimonial: allTestimonial,
+        getAllTestimonial: testimonial,
       });
     } catch (error) {
       return res.status(500).json({ message: [{ key: 'error', value: 'Internal server error' }] });
@@ -72,13 +77,9 @@ exports.getAllTestimonial = async (req, res) => {
       if (!testimonial) {
         return res.status(404).json({ message: [{ key: 'error', value: 'Testimonial not found' }] });
       }
-      const imageURL = testimonial.image ? `${process.env.BACKEND_URL}/uploads/services/testimonial/${testimonial.image}` : null;
       return res.status(200).json({
         message: [{ key: 'success', value: 'Testimonial Id based Retrieved successfully' }],
-        testimonialById: {
-          ...testimonial.toObject(),
-          image: imageURL,
-        },
+        testimonialById: testimonial
       });
     } catch (error) {
       console.error(error);
@@ -102,28 +103,40 @@ exports.getAllTestimonial = async (req, res) => {
         }
 
         if (imageFile) {
-            const imagePathToDelete = path.join(
-                __dirname,
-                '../../uploads/services/testimonial',
-                existingTestimonial.image
-            );
-            if (fs.existsSync(imagePathToDelete)) {
-                fs.unlink(imagePathToDelete, (err) => {
-                    if (err) {
-                        console.error('Error deleting image:', err);
-                    }
-                });
-            }
+          if (existingTestimonial.image) {
+              try {
+                  const imageUrlParts = existingTestimonial.image.split('/');
+                  const imageName = imageUrlParts[imageUrlParts.length - 1];
 
-            const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-            const uploadPath = path.join(
-                __dirname,
-                '../../uploads/services/testimonial',
-                uniqueFileName
-            );
-            await imageFile.mv(uploadPath);
-            updatedData.image = uniqueFileName;
-        }
+                  const {data,error} =  await supabase.storage
+                  .from('SmartCliff')
+                  .remove(`services/testimonial/${[imageName]}`);
+                 
+              } catch (error) {
+                  console.error(error);
+                  return res.status(500).json({ message: [{ key: "error", value: "Error removing existing image from Supabase storage" }] });
+              }
+          }
+
+          const uniqueFileName = `${Date.now()}_${imageFile.name}`;
+
+          try {
+              const { data, error } = await supabase.storage
+                  .from('SmartCliff/services/testimonial')
+                  .upload(uniqueFileName, imageFile.data);
+
+              if (error) {
+                  console.error(error);
+                  return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
+              }
+
+              const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/services/testimonial/${uniqueFileName}`;
+              updatedData.image = imageUrl;
+          } catch (error) {
+              console.error(error);
+              return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
+          }
+      }
 
         const updatedTestimonial = await Testimonial.findByIdAndUpdate(
             testimonialId,
@@ -155,11 +168,21 @@ exports.deleteTestimonial = async (req, res) => {
       if (!testimonial) {
         return res.status(404).json({ message: [{ key: 'error', value: 'Testimonial not found' }] });
       }
-  
       if (testimonial.image) {
-        const imagePath = path.join(__dirname, '../../uploads/services/testimonial', testimonial.image);
-        fs.unlinkSync(imagePath);
-      }
+        try {
+          
+            const imageUrlParts = testimonial.image.split('/');
+            const imageName = imageUrlParts[imageUrlParts.length - 1];
+            const {data,error} =  await supabase.storage
+            .from('SmartCliff')
+            .remove(`services/testimonial/${[imageName]}`);
+               
+
+        } catch (error) {
+            console.log(error);
+            return res.status(500).json({ message: [{ key: "error", value: "Error removing image from Supabase storage" }] });
+        }
+    }
         await Testimonial.findByIdAndDelete(id);
   
       return res.status(200).json({

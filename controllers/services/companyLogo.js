@@ -1,39 +1,41 @@
 const CompanyLogo = require("../../models/services/CompanyLogoModal");
-const path = require("path");
-const fs = require('fs');
+const { createClient } = require('@supabase/supabase-js');
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 exports.createCompanyLogo = async (req, res) => {
     try {
-        const { name,service ,subtitle} = req.body;
+        const { name, service, subtitle } = req.body;
         const existingCompanyLogo = await CompanyLogo.findOne({ name });
-        
+
         if (existingCompanyLogo) {
             return res.status(403).json({ message: [{ key: "error", value: "Company Name already exists" }] });
         }
 
-        if (!name) {
+        if (!name || !req.files.image) {
             return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
         }
 
-        let imageFile = req.files.image;
-
-        if (!imageFile) {
-            return res.status(400).json({ message: [{ key: "error", value: "Company Logo image is required" }] });
-        }
-
-        if (imageFile.size > 5 * 1024 * 1024) {
-            return res.status(400).json({ message: [{ key: "error", value: "Company Logo image size exceeds the 3MB limit" }] });
-        }
-
+        const imageFile = req.files.image;
         const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-        const uploadPath = path.join(__dirname, "../../uploads/services/company_logo", uniqueFileName);
 
         try {
-            await imageFile.mv(uploadPath);
+            const { data, error } = await supabase.storage
+            .from('SmartCliff/services/client')
+            .upload(uniqueFileName, imageFile.data);
+
+            if (error) {
+                console.error(error);
+                return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
+            }
+
+            const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/services/client/${uniqueFileName}`;
 
             const newCompanyLogo = new CompanyLogo({
                 name,
-                image: uniqueFileName,
+                image: imageUrl,
                 service,
                 subtitle
             });
@@ -51,22 +53,12 @@ exports.createCompanyLogo = async (req, res) => {
     }
 };
 
-
-
 exports.getAllCompanyLogo = async (req, res) => {
     try {
       const companyLogo = await CompanyLogo.find().populate("service");
-  
-      const companyLogos = companyLogo.map((logo) => {
-        return {
-          ...logo.toObject(),
-          image: logo.image ? process.env.BACKEND_URL + '/uploads/services/company_logo/' + logo.image : null,
-        };
-      });
-  
       return res.status(200).json({
         message: [{ key: 'success', value: 'Company Logo Retrieved successfully' }],
-        AllCompanyLogos: companyLogos,
+        AllCompanyLogos: companyLogo,
       });
     } catch (error) {
       return res.status(500).json({ message: [{ key: 'error', value: 'Internal server error' }] });
@@ -74,7 +66,6 @@ exports.getAllCompanyLogo = async (req, res) => {
   };
 
 
-  
   exports.getCompanyLogoById = async (req, res) => {
     const { id } = req.params;
     try {
@@ -82,111 +73,130 @@ exports.getAllCompanyLogo = async (req, res) => {
       if (!companyLogo) {
         return res.status(404).json({ message: [{ key: 'error', value: 'Company Logo not found' }] });
       }
-      const imageURL = companyLogo.image ? `${process.env.BACKEND_URL}/uploads/services/company_logo/${companyLogo.image}` : null;
       return res.status(200).json({
         message: [{ key: 'success', value: 'Company Logo Id Based Retrieved successfully' }],
-        companyLogoById: {
-          ...companyLogo.toObject(),
-          image: imageURL,
-        },
+        companyLogoById: companyLogo
       });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: [{ key: 'error', value: 'Internal server error' }] });
     }
   };
+  
 
+exports.updateCompanyLogo = async (req, res) => {
+  try {
+      const logoId = req.params.id;
+      const updatedData = req.body;
+      const imageFile = req.files ? req.files.image : null;
 
-  exports.updateCompanyLogo = async (req, res) => {
-    try {
-        const logoId = req.params.id;
-        const updatedData = req.body;
-        const imageFile = req.files ? req.files.image : null;
+      const existingCompanyLogo = await CompanyLogo.findById(logoId);
 
-        const existingCompanyLogo = await CompanyLogo.findById(logoId);
+      if (!existingCompanyLogo) {
+          return res.status(404).json({
+              message: [{ key: 'error', value: 'Company Logo not found' }]
+          });
+      }
 
-        if (!existingCompanyLogo) {
-            return res.status(404).json({
-                message: [{ key: 'error', value: 'Company Logo not found' }]
-            });
-        }
+      if (updatedData.name && updatedData.name !== existingCompanyLogo.name) {
+          const nameExists = await CompanyLogo.exists({ name: updatedData.name });
+          if (nameExists) {
+              return res.status(400).json({
+                  message: [{ key: 'error', value: 'Company Logo with this name already exists' }]
+              });
+          }
+      }
 
-        // Check if the name is being updated and if it already exists in the database
-        if (updatedData.name && updatedData.name !== existingCompanyLogo.name) {
-            const nameExists = await CompanyLogo.exists({ name: updatedData.name });
-            if (nameExists) {
-                return res.status(400).json({
-                    message: [{ key: 'error', value: 'Company Logo with this name already exists' }]
-                });
-            }
-        }
+      if (imageFile) {
+          if (existingCompanyLogo.image) {
+              try {
+                  const imageUrlParts = existingCompanyLogo.image.split('/');
+                  const imageName = imageUrlParts[imageUrlParts.length - 1];
 
-        if (imageFile) {
-            const imagePathToDelete = path.join(
-                __dirname,
-                '../../uploads/services/company_logo',
-                existingCompanyLogo.image
-            );
-            if (fs.existsSync(imagePathToDelete)) {
-                fs.unlink(imagePathToDelete, (err) => {
-                    if (err) {
-                        console.error('Error deleting image:', err);
-                    }
-                });
-            }
+                  const {data,error} =  await supabase.storage
+                  .from('SmartCliff')
+                  .remove(`services/client/${[imageName]}`);
+                 
+              } catch (error) {
+                  console.error(error);
+                  return res.status(500).json({ message: [{ key: "error", value: "Error removing existing image from Supabase storage" }] });
+              }
+          }
 
-            const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-            const uploadPath = path.join(
-                __dirname,
-                '../../uploads/services/company_logo',
-                uniqueFileName
-            );
-            await imageFile.mv(uploadPath);
-            updatedData.image = uniqueFileName;
-        }
+          const uniqueFileName = `${Date.now()}_${imageFile.name}`;
 
-        const updatedCompanyLogo = await CompanyLogo.findByIdAndUpdate(
-            logoId,
-            updatedData,
-        );
+          try {
+              const { data, error } = await supabase.storage
+                  .from('SmartCliff/services/client')
+                  .upload(uniqueFileName, imageFile.data);
 
-        if (!updatedCompanyLogo) {
-            return res.status(404).json({
-                message: [{ key: 'error', value: 'Company Logo not found' }]
-            });
-        }
+              if (error) {
+                  console.error(error);
+                  return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
+              }
 
-        return res.status(200).json({
-            message: [{ key: 'success', value: 'Company Logo updated successfully' }]        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            message: [{ key: 'error', value: 'Internal server error' }]
-        });
-    }
+              const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/services/client/${uniqueFileName}`;
+              updatedData.image = imageUrl;
+          } catch (error) {
+              console.error(error);
+              return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
+          }
+      }
+
+      const updatedCompanyLogo = await CompanyLogo.findByIdAndUpdate(
+          logoId,
+          updatedData,
+      );
+
+      if (!updatedCompanyLogo) {
+          return res.status(404).json({
+              message: [{ key: 'error', value: 'Company Logo not found' }]
+          });
+      }
+
+      return res.status(200).json({
+          message: [{ key: 'success', value: 'Company Logo updated successfully' }]
+      });
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+          message: [{ key: 'error', value: 'Internal server error' }]
+      });
+  }
 };
 
 exports.deleteCompanyLogo = async (req, res) => {
-    const { id } = req.params;
-  
-    try {
+  const { id } = req.params;
+
+  try {
       const companyLogo = await CompanyLogo.findById(id);
       if (!companyLogo) {
-        return res.status(404).json({ message: [{ key: 'error', value: 'Company Logo not found' }] });
+          return res.status(404).json({ message: [{ key: 'error', value: 'Company Logo not found' }] });
       }
-  
+
       if (companyLogo.image) {
-        const imagePath = path.join(__dirname, '../../uploads/services/company_logo', companyLogo.image);
-        fs.unlinkSync(imagePath);
+          try {
+            
+              const imageUrlParts = companyLogo.image.split('/');
+              const imageName = imageUrlParts[imageUrlParts.length - 1];
+              const {data,error} =  await supabase.storage
+              .from('SmartCliff')
+              .remove(`services/client/${[imageName]}`);
+                 
+
+          } catch (error) {
+              console.log(error);
+              return res.status(500).json({ message: [{ key: "error", value: "Error removing image from Supabase storage" }] });
+          }
       }
-        await CompanyLogo.findByIdAndDelete(id);
-  
+
+      await CompanyLogo.findByIdAndDelete(id);
+
       return res.status(200).json({
-        message: [{ key: 'success', value: 'Company Logo deleted successfully' }],
+          message: [{ key: 'success', value: 'Company Logo deleted successfully' }],
       });
-    } catch (error) {
+  } catch (error) {
       console.error(error);
       return res.status(500).json({ message: [{ key: 'error', value: 'Internal server error' }] });
-    }
-  };
-  
+  }
+};

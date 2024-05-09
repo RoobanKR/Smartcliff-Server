@@ -1,11 +1,16 @@
 const Course = require("../models/CourseModal");
 const path = require("path");
 const fs = require("fs");
+const { createClient } = require('@supabase/supabase-js');
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
 
+const supabase = createClient(supabaseUrl, supabaseKey);
 exports.createCourse = async (req, res) => {
   try {
     const {
       course_id,
+      slug,
       course_name,
       short_description,
       objective,
@@ -29,57 +34,39 @@ exports.createCourse = async (req, res) => {
         if (existingCourseId) {
             return res.status(403).json({ message: [{ key: "error", value: "Course Id already exists" }] });
         }
-    let imagesFiles = req.files.images;
+        const images = [];
 
-    if (!Array.isArray(imagesFiles)) {
-      imagesFiles = [imagesFiles];
-    }
-
-    if (imagesFiles.length === 0) {
-      return res
-        .status(400)
-        .json({
-          message: [{ key: "error", value: "Course images are required" }],
-        });
-    }
-
-    const images = [];
-    for (const imagesFile of imagesFiles) {
-      if (imagesFile.size > 3 * 1024 * 1024) {
-        return res
-          .status(400)
-          .json({
-            message: [
-              {
-                key: "error",
-                value: "Course image size exceeds the 3MB limit",
-              },
-            ],
-          });
-      }
-
-      const uniqueFileName = `${Date.now()}_${imagesFile.name}`;
-      const uploadPath = path.join(
-        __dirname,
-        "../uploads/course",
-        uniqueFileName
-      );
-
-      try {
-        await imagesFile.mv(uploadPath);
-        images.push(uniqueFileName);
-      } catch (err) {
-        console.error("Error moving the Course Image file:", err);
-        return res
-          .status(500)
-          .json({
-            message: [{ key: "error", value: "Internal server error" }],
-          });
-      }
-    }
+        if (req.files?.images) {
+          const imageFiles = Array.isArray(req.files.images) ? req.files.images : [req.files.images];
+    
+          for (const imageFile of imageFiles) {
+            if (imageFile.size > 3 * 1024 * 1024) {
+              return res.status(400).json({
+                message: [{ key: "error", value: "Image size exceeds the 3MB limit" }],
+              });
+            }
+    
+            const uniqueFileName = `${Date.now()}_${imageFile.name}`;
+    
+            const { data, error } = await supabase.storage
+            .from('SmartCliff/courses/course')
+            .upload(uniqueFileName, imageFile.data);
+    
+            if (error) {
+              console.error("Error uploading image to Supabase:", error);
+              return res.status(500).json({
+                message: [{ key: "error", value: "Error uploading image to Supabase" }],
+              });
+            }
+    
+            const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/courses/course/${uniqueFileName}`;
+            images.push(imageUrl);
+          }
+        }
 
     const newCourse = new Course({
       course_id,
+      slug,
       course_name,
       short_description,
       objective,
@@ -139,52 +126,10 @@ exports.getAllCourses = async (req, res) => {
         },
       });
 
-    const courseWithImages = courses.map((course) => {
-      const courseData = { ...course._doc };
-
-      if (course.images && course.images.length > 0) {
-        const imagesWithUrls = course.images.map(
-          (image) => `${process.env.BACKEND_URL}/uploads/course/${image}`
-        );
-        courseData.images = imagesWithUrls;
-      }
-
-      if (course.tool_software && course.tool_software.length > 0) {
-        const toolSoftwareImagesWithUrls = course.tool_software.map((tool) => ({
-          ...tool._doc,
-          image: `${process.env.BACKEND_URL}/uploads/tool_software/${tool.image}`,
-        }));
-        courseData.tool_software = toolSoftwareImagesWithUrls;
-      }
-
-      if (course.category && course.category.images && course.category.images.length > 0) {
-        const categoryImagesWithUrls = course.category.images.map(
-          (image) =>
-            `${process.env.BACKEND_URL}/uploads/category/${image.split("/").pop()}`
-        );
-        courseData.category.images = categoryImagesWithUrls;
-      }
-
-      if (course.instructor && course.instructor.length > 0) {
-        courseData.instructor = course.instructor.map((instructor) => {
-          if (instructor.profile_pic) {
-            const instructorProfilePicFilename = instructor.profile_pic
-              .split("/")
-              .pop();
-            const instructorProfilePicUrl = `${process.env.BACKEND_URL}/uploads/instructor/${instructorProfilePicFilename}`;
-            return { ...instructor._doc, profile_pic: instructorProfilePicUrl };
-          } else {
-            return instructor;
-          }
-        });
-      }
-
-      return courseData;
-    });
-
+   
     return res.status(201).json({
       message: [{ key: "SUCCESS", value: "Courses retrieved successfully" }],
-      courses: courseWithImages,
+      courses: courses,
     });
   } catch (error) {
     console.error(error);
@@ -213,50 +158,12 @@ exports.getCourseById = async (req, res) => {
         .json({ message: [{ key: "error", value: "Course not found" }] });
     }
 
-    const courseData = { ...course._doc };
-
-    if (course.images && course.images.length > 0) {
-      const imagesWithUrls = course.images.map(
-        (image) => `${process.env.BACKEND_URL}/uploads/course/${image}`
-      );
-      courseData.images = imagesWithUrls;
-    }
-
-    if (course.tool_software && course.tool_software.length > 0) {
-      const toolSoftwareImagesWithUrls = course.tool_software.map((tool) => ({
-        ...tool._doc,
-        image: `${process.env.BACKEND_URL}/uploads/tool_software/${tool.image}`,
-      }));
-      courseData.tool_software = toolSoftwareImagesWithUrls;
-    }
-
-    if (course.category && course.category.images && course.category.images.length > 0) {
-      const categoryImagesWithUrls = course.category.images.map(
-        (image) =>
-          `${process.env.BACKEND_URL}/uploads/category/${image.split("/").pop()}`
-      );
-      courseData.category.images = categoryImagesWithUrls;
-    }
-
-    if (course.instructor && course.instructor.length > 0) {
-      courseData.instructor = course.instructor.map((instructor) => {
-        if (instructor.profile_pic) {
-          const instructorProfilePicFilename = instructor.profile_pic
-            .split("/")
-            .pop();
-          const instructorProfilePicUrl = `${process.env.BACKEND_URL}/uploads/instructor/${instructorProfilePicFilename}`;
-          return { ...instructor._doc, profile_pic: instructorProfilePicUrl };
-        } else {
-          return instructor;
-        }
-      });
-    }
-
+   
     return res.status(201).json({
       message: [
         { key: "SUCCESS", value: "Courses retrieved Id based successfully" },
       ],
-      courses: courseData,
+      courses: course,
     });
   } catch (error) {
     console.error(error);
@@ -273,6 +180,7 @@ exports.updateCourseById = async (req, res) => {
     const {
       course_name,
       short_description,
+      slug,
       objective,
       cost,
       duration,
@@ -287,71 +195,68 @@ exports.updateCourseById = async (req, res) => {
     } = req.body;
 
     const course = await Course.findById(courseId);
-    const imageFile = req.files && req.files.images; // Use a single variable for the image file
 
     if (!course) {
       return res.status(404).json({ message: [{ key: "error", value: "Course not found" }] });
     }
 
-    if (!imageFile) { // Check if imageFile exists for single image update
-      return res.status(400).json({ message: [{ key: "error", value: "No image was uploaded for the course" }] });
-    }
-
-    // Remove existing images if any
-    for (const imageName of course.images) {
-      try {
-        fs.unlinkSync(path.join(__dirname, `../uploads/course/${imageName}`));
-      } catch (err) {
-        console.error("Error removing existing course image file:", err);
-      }
-    }
-
+    const imageFile = req.files?.images; // Access uploaded image(s)
     const images = [];
 
-    // Handle single or multiple image uploads
-    if (Array.isArray(imageFile)) {
-      // Handle multiple images
-      for (const image of imageFile) {
+    if (imageFile) {
+      const imageFiles = Array.isArray(imageFile) ? imageFile : [imageFile]; // Handle single or multiple files
+
+      // Delete existing images from Supabase storage
+      for (const imageUrl of course.images) {
+        const imageParts = imageUrl.split("/");
+        const imageName = imageParts[imageParts.length - 1];
+        try {
+          const { data, error } = await supabase.storage
+          .from('SmartCliff')
+              .remove(`courses/course/${[imageName]}`);
+          if (error) {
+            console.error("Error removing existing course image from Supabase:", error);
+          }
+        } catch (err) {
+          console.error("Error deleting existing course image from Supabase:", err);
+        }
+      }
+
+      // Upload new image(s) to Supabase
+      for (const image of imageFiles) {
         if (image.size > 3 * 1024 * 1024) {
           return res.status(400).json({ message: [{ key: "error", value: "Course image size exceeds the 3MB limit" }] });
         }
 
         const uniqueFileName = `${Date.now()}_${image.name}`;
-        const uploadPath = path.join(__dirname, "../uploads/course", uniqueFileName);
 
         try {
-          await image.mv(uploadPath);
-          images.push(uniqueFileName);
+          const { data, error } = await supabase.storage
+          .from('SmartCliff/courses/course')
+          .upload(uniqueFileName, imageFile.data);
+
+
+          if (error) {
+            console.error("Error uploading image to Supabase:", error);
+            return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase" }] });
+          }
+
+          const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/courses/course/${uniqueFileName}`;
+          images.push(imageUrl);
         } catch (err) {
           console.error("Error moving the course image file:", err);
           return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
         }
       }
-    } else {
-      // Handle single image
-      if (imageFile.size > 3 * 1024 * 1024) {
-        return res.status(400).json({ message: [{ key: "error", value: "Course image size exceeds the 3MB limit" }] });
-      }
-
-      const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-      const uploadPath = path.join(__dirname, "../uploads/course", uniqueFileName);
-
-      try {
-        await imageFile.mv(uploadPath);
-        images.push(uniqueFileName);
-      } catch (err) {
-        console.error("Error moving the course image file:", err);
-        return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
-      }
     }
 
     // Update course data
     course.course_name = course_name;
+    course.slug = slug;
     course.short_description = short_description;
     course.objective = objective;
     course.cost = cost;
     course.duration = duration;
-    course.images = images;
     course.mode_of_trainee = mode_of_trainee;
     course.course_level = course_level;
     course.certificate = certificate;
@@ -360,6 +265,7 @@ exports.updateCourseById = async (req, res) => {
     course.tool_software = typeof tool_software === "string" ? tool_software.split(",") : Array.isArray(tool_software) ? tool_software : [];
     course.category = category;
     course.instructor = typeof instructor === "string" ? instructor.split(",") : Array.isArray(instructor) ? instructor : [];
+    course.images = images;
 
     await course.save();
 
@@ -371,6 +277,7 @@ exports.updateCourseById = async (req, res) => {
     return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };
+
 
 exports.deleteCourse = async (req, res) => {
   try {
@@ -384,25 +291,34 @@ exports.deleteCourse = async (req, res) => {
         .json({ message: [{ key: "error", value: "Course not found" }] });
     }
 
-    for (const imageName of existingCourse.images) {
-      try {
-        fs.unlinkSync(path.join(__dirname, `../uploads/course/${imageName}`));
-      } catch (err) {
-        console.error("Error removing category image file:", err);
+    // Delete associated images from Supabase storage
+    const supabaseImagePaths = existingCourse.images.map((imageUrl) => {
+      const parts = imageUrl.split('/');
+      return `courses/course/${parts[parts.length - 1]}`;
+    });
+
+    try {
+      const { data, error } = await supabase.storage
+      .from('SmartCliff')
+      .remove(`courses/course/${[supabaseImagePaths]}`);
+
+      if (error) {
+        console.error("Error removing course images from Supabase:", error);
+        return res.status(500).json({ message: [{ key: "error", value: "Error deleting course images" }] });
       }
+    } catch (err) {
+      console.error("Error deleting course images from Supabase:", err);
+      return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
     }
 
+    // Delete course from MongoDB
     await Course.deleteOne({ _id: id });
 
-    return res
-      .status(200)
-      .json({
-        message: [{ key: "success", value: "Course Delete successfully" }],
-      });
+    return res.status(200).json({
+      message: [{ key: "success", value: "Course deleted successfully" }],
+    });
   } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ message: [{ key: "error", value: "Internal server error" }] });
+    console.error("Error deleting course:", error);
+    return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };

@@ -1,112 +1,86 @@
 const ProgramMentor = require("../../models/degreeprogram/ProgramMentorModal");
 const path = require("path");
 const fs = require("fs");
+const { createClient } = require('@supabase/supabase-js');
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 exports.createProgramMentor = async (req, res) => {
   try {
     const {
       name,
       designation,
-      degree_program
-     
+      degree_program,
     } = req.body;
 
-    if (
-      !name ||
-      !designation
-    ) {
+    // Validate the required fields
+    if (!name || !designation) {
       return res
         .status(400)
-        .json({ message: [{ key: "error", value: "Required fields" }] });
+        .json({ message: [{ key: "error", value: "Required fields missing" }] });
     }
 
-    let imageFile = req.files.image;
-
+    // Validate the image
+    const imageFile = req.files?.image;
     if (!imageFile) {
-      return res
-        .status(400)
-        .json({
-          message: [
-            {
-              key: "error",
-              value: "Program Mentor image is required",
-            },
-          ],
-        });
+      return res.status(400).json({
+        message: [{ key: "error", value: "Mentor image is required" }],
+      });
     }
 
     if (imageFile.size > 5 * 1024 * 1024) {
-      return res
-        .status(400)
-        .json({
-          message: [
-            {
-              key: "error",
-              value:
-                "Program Mentor image size exceeds the 5MB limit",
-            },
-          ],
-        });
+      return res.status(400).json({
+        message: [{ key: "error", value: "Image size exceeds the 5MB limit" }],
+      });
     }
 
     const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-    const uploadPath = path.join(
-      __dirname,
-      "../../uploads/mca/program_mentor",
-      uniqueFileName
-    );
 
-    try {
-      await imageFile.mv(uploadPath);
+    const { data, error } = await supabase.storage
+      .from("SmartCliff/degreeProgram/program_mentor")
+      .upload(uniqueFileName, imageFile.data);
 
-      const newProgramMentor = new ProgramMentor({
-        name,
-        designation,
-        image: uniqueFileName,
-        degree_program
-
+    if (error) {
+      console.error("Error uploading image to Supabase:", error);
+      return res.status(500).json({
+        message: [{ key: "error", value: "Error uploading image to Supabase" }],
       });
-
-      await newProgramMentor.save();
-
-      return res
-        .status(201)
-        .json({
-          message: [
-            {
-              key: "Success",
-              value: "Program Mentor Added Successfully",
-            },
-          ],
-          Program_Mentor:newProgramMentor
-        });
-    } catch (error) {
-      return res
-        .status(500)
-        .json({ message: [{ key: "error", value: "Internal server error" }] });
     }
+
+    const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/degreeProgram/program_mentor/${uniqueFileName}`;
+
+    const newProgramMentor = new ProgramMentor({
+      name,
+      designation,
+      image: imageUrl,
+      degree_program,
+    });
+
+    await newProgramMentor.save();
+
+    return res.status(201).json({
+      message: [{ key: "success", value: "Program Mentor added successfully" }],
+      Program_Mentor: newProgramMentor,
+    });
+
   } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ message: [{ key: "error", value: "Internal server error" }] });
+    console.error("Internal server error:", error);
+    return res.status(500).json({
+      message: [{ key: "error", value: "Internal server error" }],
+    });
   }
 };
-
 exports.getAllProgramMentor = async (req, res) => {
     try {
       const programMentor = await ProgramMentor.find().populate("degree_program");
   
-      const programMentorWithImage = programMentor.map((mentor) => {
-        return {
-          ...mentor.toObject(),
-          image: mentor.image ? process.env.BACKEND_URL + '/uploads/mca/program_mentor/' + mentor.image : null,
-        };
-      });
+     
   
       return res.status(200).json({
         message: [{ key: 'success', value: 'Program Mentor Retrieved successfully' }],
-        programMentor: programMentorWithImage,
+        programMentor: programMentor,
       });
     } catch (error) {
       return res.status(500).json({ message: [{ key: 'error', value: 'Internal server error' }] });
@@ -121,13 +95,9 @@ exports.getAllProgramMentor = async (req, res) => {
         return res.status(404).json({ message: [{ key: 'error', value: 'Program Mentor not found' }] });
       }
       
-      const programMentorimage = programMentor.image ? `${process.env.BACKEND_URL}/uploads/mca/program_mentor/${programMentor.image}` : null;
       return res.status(200).json({
         message: [{ key: 'success', value: 'Program Mentor Retrieved successfully' }],
-        programMentorById: {
-          ...programMentor.toObject(),
-          image: programMentorimage,
-        },
+        programMentorById: programMentor
       });
     } catch (error) {
       console.error(error);
@@ -151,28 +121,40 @@ exports.getAllProgramMentor = async (req, res) => {
       }
   
       if (imageFile) {
-        const imagePathToDelete = path.join(
-          __dirname,
-          '../../uploads/mca/program_mentor',
-          existingProgramMentor.image
-        );
-        if (fs.existsSync(imagePathToDelete)) {
-          fs.unlink(imagePathToDelete, (err) => {
-            if (err) {
-              console.error('Error deleting image:', err);
+        if (existingProgramMentor.image) {
+            try {
+                const imageUrlParts = existingProgramMentor.image.split('/');
+                const imageName = imageUrlParts[imageUrlParts.length - 1];
+  
+                const {data,error} =  await supabase.storage
+                .from('SmartCliff')
+                .remove(`degreeProgram/program_mentor/${[imageName]}`);
+               
+            } catch (error) {
+                console.error(error);
+                return res.status(500).json({ message: [{ key: "error", value: "Error removing existing image from Supabase storage" }] });
             }
-          });
         }
   
         const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-        const uploadPath = path.join(
-          __dirname,
-          '../../uploads/mca/program_mentor',
-          uniqueFileName
-        );
-        await imageFile.mv(uploadPath);
-        updatedData.image = uniqueFileName;
-      }
+  
+        try {
+            const { data, error } = await supabase.storage
+                .from('SmartCliff/degreeProgram/program_mentor')
+                .upload(uniqueFileName, imageFile.data);
+  
+            if (error) {
+                console.error(error);
+                return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
+            }
+  
+            const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/degreeProgram/program_mentor/${uniqueFileName}`;
+            updatedData.image = imageUrl;
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
+        }
+    }
   
       const updatedProgramMentor = await ProgramMentor.findByIdAndUpdate(
         mentorId,
@@ -205,8 +187,16 @@ exports.getAllProgramMentor = async (req, res) => {
       }
   
       if (programMentor.image) {
-        const imagePath = path.join(__dirname, '../../uploads/mca/program_mentor', programMentor.image);
-        fs.unlinkSync(imagePath);
+        const imageUrlParts = programMentor.image.split('/');
+        const imageName = imageUrlParts[imageUrlParts.length - 1];
+  
+        try {
+          await supabase.storage
+          .from('SmartCliff')
+                .remove(`degreeProgram/program_mentor/${[imageName]}`);
+        } catch (error) {
+          console.error("Error deleting image from Supabase:", error);
+        }
       }
         await ProgramMentor.findByIdAndDelete(id);
   

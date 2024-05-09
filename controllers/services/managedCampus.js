@@ -67,19 +67,19 @@ exports.getAllManagedCampus = async (req, res) => {
       },
       execution_highlights: campus.execution_highlights.map(highlight => ({
         ...highlight._doc,
-        image: highlight && highlight.image ? process.env.BACKEND_URL + `/uploads/executions/highlights/${highlight.image}` : null
+        image: highlight && highlight.image
       })),
       gallery: campus.gallery.map(item => ({
         ...item._doc,
-        image: item && item.image ? process.env.BACKEND_URL + `/uploads/gallery/${item.image}` : null
+        image: item && item.image
       })),
       our_client: campus.our_client.map(client => ({
         ...client._doc,
-        image: client && client.image ? process.env.BACKEND_URL + `/uploads/our_clients/${client.image}` : null
+        image: client && client.image
       })),
       service_testimonial: campus.service_testimonial.map(testimonial => ({
         ...testimonial._doc,
-        image: testimonial && testimonial.image ? process.env.BACKEND_URL + `/uploads/services/testimonial/${testimonial.image}` : null
+        image: testimonial && testimonial.image 
       }))
     }));
 
@@ -121,19 +121,19 @@ exports.getManagedCampusById = async (req, res) => {
       },
       execution_highlights: managedCampus.execution_highlights.map(highlight => ({
         ...highlight._doc,
-        image: highlight && highlight.image ? process.env.BACKEND_URL + `/uploads/executions/highlights/${highlight.image}` : null
-      })),
+        image: highlight && highlight.image
+            })),
       gallery: managedCampus.gallery.map(item => ({
         ...item._doc,
-        image: item && item.image ? process.env.BACKEND_URL + `/uploads/gallery/${item.image}` : null
+        image: item && item.image
       })),
       our_client: managedCampus.our_client.map(client => ({
         ...client._doc,
-        image: client && client.image ? process.env.BACKEND_URL + `/uploads/our_clients/${client.image}` : null
+        image: client && client.image
       })),
       service_testimonial: managedCampus.service_testimonial.map(testimonial => ({
         ...testimonial._doc,
-        image: testimonial && testimonial.image ? process.env.BACKEND_URL + `/uploads/services/testimonial/${testimonial.image}` : null
+        image: testimonial && testimonial.image
       }))
     };
 

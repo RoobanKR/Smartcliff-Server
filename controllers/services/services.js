@@ -1,17 +1,22 @@
 const Service = require("../../models/services/ServicesModal");
 const path = require("path");
 const fs = require('fs');
+const { createClient } = require('@supabase/supabase-js');
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 exports.createServices = async (req, res) => {
     try {
-        const { title, description } = req.body;
+        const { title, description,slug } = req.body;
         const existingService = await Service.findOne({ title });
         
         if (existingService) {
             return res.status(403).json({ message: [{ key: "error", value: "Service Name already exists" }] });
         }
 
-        if (!title || !description) {
+        if (!title || !description || !slug) {
             return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
         }
 
@@ -35,7 +40,7 @@ exports.createServices = async (req, res) => {
             const videoPaths = [];
             if (videoFiles) {
                 if (!Array.isArray(videoFiles)) {
-                    videoFiles = [videoFiles]; // Convert to array if single file upload
+                    videoFiles = [videoFiles];
                 }
 
                 for (const videoFile of videoFiles) {
@@ -51,6 +56,7 @@ exports.createServices = async (req, res) => {
 
             const newService = new Service({
                 title,
+                slug,
                 description,
                 image: uniqueFileName,
                 videos: videoPaths,

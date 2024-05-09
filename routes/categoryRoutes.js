@@ -5,7 +5,7 @@ const { userAuth } = require('../middlewares/userAuth.js');
 const { userRole } = require('../middlewares/userRole.js');
 const { createCategory, getAllCategory, getCategoryById, updateCategory, deleteCategory } = require('../controllers/category.js');
 
-router.post('/create/category',userAuth,userRole(['admin', 'super_admin']),createCategory);
+router.post('/create/category',createCategory);
 
 router.get('/getAll/category', getAllCategory);
 
