@@ -1,6 +1,4 @@
 const ProgramMentor = require("../../models/degreeprogram/ProgramMentorModal");
-const path = require("path");
-const fs = require("fs");
 const { createClient } = require('@supabase/supabase-js');
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabaseUrl = process.env.SUPABASE_URL;
