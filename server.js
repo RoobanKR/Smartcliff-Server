@@ -56,7 +56,7 @@ app.use(
   cors({
     //origin: ["http://localhost:3000", "http://localhost:3535"],
     origin: [
-      "http://localhost:3000",
+      // "http://localhost:3000",
       "https://smart-cliff-next-js.vercel.app",
       "http://localhost:3535",
     ],
