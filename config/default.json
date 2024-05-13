@@ -1,7 +1,7 @@
 {
   "MONGOURI": "mongodb+srv://Rooban35:Roobankr5@cluster0.dzti96f.mongodb.net/",
   "JWT_TOKEN_KEY": "KJ9BK0DF098353NF09E230RH2039RH",
-  "BASE_URL": "https://smart-cliff-next-js.vercel.app",
+  "BASE_URL": "http://localhost:3000",
   "CLIENT_URL":"http://localhost:3535",
   "emailConfig": {
     "user": "roobankr6@gmail.com",

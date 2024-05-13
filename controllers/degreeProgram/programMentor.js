@@ -13,7 +13,6 @@ exports.createProgramMentor = async (req, res) => {
       degree_program,
     } = req.body;
 
-    // doubt
     if (!name || !designation) {
       return res
         .status(400)

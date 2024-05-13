@@ -20,9 +20,9 @@ const entrollBatchRoutes = require("./routes/entrollBatchRoutes");
 const degreeProgramRoutes = require("./routes/degreeProgram/degreeProgramRoutes");
 const ourProgramRoutes = require("./routes/degreeProgram/ourProgramRoutes");
 const admissionProcessRoutes = require("./routes/degreeProgram/admissionProcessRoutes");
+const programMentorRoutes = require("./routes/degreeProgram/programMentorRoutes");
 const programFeesRoutes = require("./routes/degreeProgram/programFeesRoutes");
 const eligibilityCriteriaRoutes = require("./routes/degreeProgram/eligibilityCriteriaRoutes");
-// const programMentorRoutes = require("./routes/degreeProgram/programMentorRoutes");
 const semesterRoutes = require("./routes/degreeProgram/semesterRoutes");
 const outcomeRoutes = require("./routes/degreeProgram/outcomeRoutes");
 const highlightRoutes = require("./routes/degreeProgram/highlightRoutes");
@@ -44,6 +44,10 @@ const hiringApplyRoutes = require("./routes/hiring/hiringApplyRoutes");
 const trainFromUsRoutes = require("./routes/hiring/trainFromUsRoutes");
 const instituteRoutes = require("./routes/hiring/instituteFormRoutes");
 
+// bussiness
+const keyElementsRoutes = require("./routes/bussiness/keyElementsRoutes");
+const bussinessPlacementsRoutes = require("./routes/bussiness/bussinessPlacementsRoutes");
+const engagedGovermenceRoutes = require("./routes/bussiness/engagedGovermanceRoutes");
 
 const path = require("path");
 
@@ -56,8 +60,8 @@ app.use(
   cors({
     //origin: ["http://localhost:3000", "http://localhost:3535"],
     origin: [
-      // "http://localhost:3000",
-      "https://smart-cliff-next-js.vercel.app",
+      "http://localhost:3000",
+      // "https://smart-cliff-next-js-fkpr-roobankrs-projects.vercel.app",
       "http://localhost:3535",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
@@ -181,7 +185,7 @@ app.use("/",courseRoutes);
 app.use("/",degreeProgramRoutes);
 app.use("/",ourProgramRoutes);
 app.use("/",admissionProcessRoutes);
-// app.use("/",programMentorRoutes);
+app.use("/",programMentorRoutes);
 app.use("/",programFeesRoutes);
 app.use("/",eligibilityCriteriaRoutes);
 app.use("/",semesterRoutes);
@@ -206,7 +210,10 @@ app.use("/",hiringApplyRoutes);
 app.use("/",trainFromUsRoutes);
 app.use("/",instituteRoutes);
 
-
+// bussiness
+app.use("/",keyElementsRoutes);
+app.use("/",bussinessPlacementsRoutes);
+app.use("/",engagedGovermenceRoutes);
 
 
 

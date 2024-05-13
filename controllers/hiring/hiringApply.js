@@ -104,3 +104,36 @@ exports.createHiringApply = async (req, res) => {
     });
   }
 };
+
+
+exports.sendResponseEmail = async (req, res) => {
+  try {
+    const { email, response } = req.body;
+
+    // Assuming you have some validation for email and response here
+
+    const receiverEmail = email;
+    const receiverSubject = "Response to your job application";
+    const receiverBody = `
+      <p>Hello,</p>
+      <p>Thank you for your job application. Here is our response:</p>
+      <p>${response}</p>
+      <p>Best regards,</p>
+      <p>Your Company</p>
+    `;
+
+    // Call the sendEmail function to send the response email
+    const responseEmailSent = await sendEmail(receiverEmail, receiverSubject, receiverBody);
+
+    if (responseEmailSent) {
+      console.log("Response email sent successfully");
+      return res.status(200).json({ message: "Response email sent successfully" });
+    } else {
+      console.error("Error sending response email");
+      return res.status(500).json({ message: "Error sending response email" });
+    }
+  } catch (error) {
+    console.error("Error sending response email:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
