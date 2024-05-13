@@ -63,7 +63,7 @@ app.use(
       // "http://localhost:3000",
       "https://smart-cliff-next-js.vercel.app",
       // "http://localhost:3535",
-      "https://smart-cliff-admin-n31x.vercel.app/"
+      "https://smart-cliff-admin-n31x.vercel.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
