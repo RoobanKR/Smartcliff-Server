@@ -3,9 +3,9 @@ const express = require('express');
 const router = express.Router();
 const { userAuth } = require('../../middlewares/userAuth.js');
 const { userRole } = require('../../middlewares/userRole.js');
-const { createProgramMentor, getAllProgramMentor, getProgramMentorById, deleteProgramMentor, updateProgramMentor } = require('../../controllers/degreeProgram/ProgramMentor.js');
+const {  getAllProgramMentor, getProgramMentorById, deleteProgramMentor, updateProgramMentor } = require('../../controllers/degreeProgram/ProgramMentor.js');
 
-router.post('/create/program_mentor',createProgramMentor);
+// router.post('/create/program_mentor',createProgramMentor);
 
 router.get('/getAll/program_mentor', getAllProgramMentor);
 
