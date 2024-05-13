@@ -5,7 +5,7 @@ const { userAuth } = require('../../middlewares/userAuth.js');
 const { userRole } = require('../../middlewares/userRole.js');
 const {  getAllProgramMentor, getProgramMentorById, deleteProgramMentor, updateProgramMentor } = require('../../controllers/degreeProgram/ProgramMentor.js');
 
-// router.post('/create/program_mentor',createProgramMentor);
+router.post('/create/program_mentor',createProgramMentor);
 
 router.get('/getAll/program_mentor', getAllProgramMentor);
 
