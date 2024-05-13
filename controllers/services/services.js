@@ -20,24 +20,45 @@ exports.createServices = async (req, res) => {
             return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
         }
 
-        let imageFile = req.files.image;
         let videoFiles = req.files.videos;
 
+
+        const imageFile = req.files?.image;
+
         if (!imageFile) {
-            return res.status(400).json({ message: [{ key: "error", value: "Service image is required" }] });
+          return res.status(400).json({
+            message: [{ key: "error", value: "services image is required" }],
+          });
         }
-
+    
         if (imageFile.size > 5 * 1024 * 1024) {
-            return res.status(400).json({ message: [{ key: "error", value: "Service image size exceeds the 5MB limit" }] });
+          return res.status(400).json({
+            message: [
+              {
+                key: "error",
+                value: "services image size exceeds the 5MB limit",
+              },
+            ],
+          });
         }
-
+    
         const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-        const uploadPath = path.join(__dirname, "../../uploads/services/service", uniqueFileName);
-
+    
         try {
-            await imageFile.mv(uploadPath);
-
-            const videoPaths = [];
+          const { data, error } = await supabase.storage
+            .from('SmartCliff/services/service')
+            .upload(uniqueFileName, imageFile.data);
+    
+          if (error) {
+            console.error("Error uploading image to Supabase:", error);
+            return res.status(500).json({
+              message: [{ key: "error", value: "Error uploading image to Supabase" }],
+            });
+          }
+    
+          const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/services/service/${uniqueFileName}`;
+    
+                const videoPaths = [];
             if (videoFiles) {
                 if (!Array.isArray(videoFiles)) {
                     videoFiles = [videoFiles];
@@ -58,7 +79,7 @@ exports.createServices = async (req, res) => {
                 title,
                 slug,
                 description,
-                image: uniqueFileName,
+                image: imageUrl,
                 videos: videoPaths,
             });
 
@@ -84,7 +105,6 @@ exports.getAllService = async (req, res) => {
             const serviceObj = service.toObject();
             const updatedService = {
                 ...serviceObj,
-                image: serviceObj.image ? process.env.BACKEND_URL + '/uploads/services/service/' + serviceObj.image : null,
                 videos: serviceObj.videos.map(video => process.env.BACKEND_URL + '/uploads/services/service/videos/' + video)
             };
             return updatedService;
@@ -108,14 +128,12 @@ exports.getServiceById = async (req, res) => {
             return res.status(404).json({ message: [{ key: 'error', value: 'Service not found' }] });
         }
 
-        const imageURL = service.image ? `${process.env.BACKEND_URL}/uploads/services/service/${service.image}` : null;
         const videoURLs = service.videos.map(video => process.env.BACKEND_URL + '/uploads/services/service/videos/' + video);
 
         return res.status(200).json({
             message: [{ key: 'success', value: 'Service Id based Retrieved successfully' }],
             serviceById: {
                 ...service.toObject(),
-                image: imageURL,
                 videos: videoURLs,
             },
         });
@@ -144,21 +162,41 @@ exports.updateService = async (req, res) => {
         }
 
         if (imageFile) {
-            const imagePathToDelete = path.join(__dirname, '../../uploads/services/service', existingService.image);
-            if (fs.existsSync(imagePathToDelete)) {
-                fs.unlink(imagePathToDelete, (err) => {
-                    if (err) {
-                        console.error('Error deleting image:', err);
-                    }
-                });
+            if (existingService.image) {
+                try {
+                    const imageUrlParts = existingService.image.split('/');
+                    const imageName = imageUrlParts[imageUrlParts.length - 1];
+      
+                    const {data,error} =  await supabase.storage
+                    .from('SmartCliff')
+                    .remove(`services/service/${[imageName]}`);
+                   
+                } catch (error) {
+                    console.error(error);
+                    return res.status(500).json({ message: [{ key: "error", value: "Error removing existing image from Supabase storage" }] });
+                }
             }
-
+      
             const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-            const uploadPath = path.join(__dirname, '../../uploads/services/service', uniqueFileName);
-            await imageFile.mv(uploadPath);
-            updatedData.image = uniqueFileName;
+      
+            try {
+                const { data, error } = await supabase.storage
+                    .from('SmartCliff/services/service')
+                    .upload(uniqueFileName, imageFile.data);
+      
+                if (error) {
+                    console.error(error);
+                    return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
+                }
+      
+                const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/services/service/${uniqueFileName}`;
+                updatedData.image = imageUrl;
+            } catch (error) {
+                console.error(error);
+                return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
+            }
         }
-
+      
         if (videoFiles) {
             const videoPathsToDelete = existingService.videos.map(video => path.join(__dirname, '../../uploads/services/service/videos', video));
             for (const videoPathToDelete of videoPathsToDelete) {
@@ -215,10 +253,18 @@ exports.deleteServices = async (req, res) => {
         }
 
         if (service.image) {
-            const imagePath = path.join(__dirname, '../../uploads/services/service', service.image);
-            fs.unlinkSync(imagePath);
-        }
-
+            const imageUrlParts = service.image.split('/');
+            const imageName = imageUrlParts[imageUrlParts.length - 1];
+      
+            try {
+              await supabase.storage
+              .from('SmartCliff')
+              .remove(`services/service/${[imageName]}`);
+            } catch (error) {
+              console.error("Error deleting image from Supabase:", error);
+            }
+          }
+      
         if (service.videos && service.videos.length > 0) {
             for (const video of service.videos) {
                 const videoPath = path.join(__dirname, '../../uploads/services/service/videos', video);
