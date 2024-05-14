@@ -106,7 +106,7 @@ exports.createHiringApply = async (req, res) => {
 };
 
 
-exports.sendResponseEmail = async (req, res) => {
+exports.sendResponseEmailInHiringApply = async (req, res) => {
   try {
     const { email, response } = req.body;
 
