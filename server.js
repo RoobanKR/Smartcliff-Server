@@ -146,10 +146,10 @@ app.use(
 // );
 
 // Services
-app.use(
-  "/uploads/services/service",
-  express.static(path.join(__dirname, "uploads/services/service"))
-);
+// app.use(
+//   "/uploads/services/service",
+//   express.static(path.join(__dirname, "uploads/services/service"))
+// );
 app.use(
   "/uploads/services/service/videos",
   express.static(path.join(__dirname, "uploads/services/service/videos"))
