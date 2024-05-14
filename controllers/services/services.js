@@ -128,7 +128,7 @@ exports.getServiceById = async (req, res) => {
             return res.status(404).json({ message: [{ key: 'error', value: 'Service not found' }] });
         }
 
-        const videoURLs = service.videos.map(video => process.env.BACKEND_URL + '/uploads/services/service/videos/' + video);
+        const videoURLs = service.videos.map(video => 'https://smartcliff-server-5qpp.onrender.com/uploads/services/service/videos/' + video);
 
         return res.status(200).json({
             message: [{ key: 'success', value: 'Service Id based Retrieved successfully' }],
