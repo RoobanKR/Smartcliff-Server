@@ -105,7 +105,7 @@ exports.getAllService = async (req, res) => {
             const serviceObj = service.toObject();
             const updatedService = {
                 ...serviceObj,
-                videos: serviceObj.videos.map(video => process.env.BACKEND_URL + '/uploads/services/service/videos/' + video)
+                videos: serviceObj.videos.map(video => 'https://smartcliff-server-5qpp.onrender.com/uploads/services/service/videos/' + video)
             };
             return updatedService;
         });
