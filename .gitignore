@@ -19,7 +19,7 @@ dist/
 # Package files
 *.jar
 
-.env
+*.env
 # Maven
 target/
 dist/
