@@ -71,7 +71,7 @@ app.use(
     //origin: ["http://localhost:3000", "http://localhost:3535"],
     origin: [
       // "http://localhost:3000",
-      "https://smart-cliff-next-js-fkpr-roobankrs-projects.vercel.app",
+      "https://smart-cliff-next-js.vercel.app",
       "http://localhost:3535",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
