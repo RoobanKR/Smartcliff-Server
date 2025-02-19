@@ -16,6 +16,8 @@ const faqSchema = new mongoose.Schema({
 },
   service: { type: mongoose.Schema.Types.ObjectId, ref: "Services",    default: null,
 },
+  business_service: { type: mongoose.Schema.Types.ObjectId, ref: 'business_service', required: true }, 
+
 
   category_name: { type: String, default: "common" },
   lastModifiedOn: { type: Date, default: Date.now },

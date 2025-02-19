@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { userAuth } = require('../../middlewares/userAuth.js');
 const { userRole } = require('../../middlewares/userRole.js');
-const { createHiringApply, sendResponseEmailInHiringApply } = require('../../controllers/hiring/hiringApply.js');
+const { createHiringApply, sendResponseEmail, sendResponseEmailInHiringApply } = require('../../controllers/hiring/hiringApply.js');
 
 router.post('/create/hiring_Apply',createHiringApply);
 router.post('/response_mail/hiring_Apply',sendResponseEmailInHiringApply);

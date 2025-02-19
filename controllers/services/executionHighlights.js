@@ -1,15 +1,10 @@
 const ExecutionHighlights = require("../../models/services/ExecutionHighlightsModal");
 const path = require("path");
 const fs = require('fs');
-const { createClient } = require('@supabase/supabase-js');
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabaseUrl = process.env.SUPABASE_URL;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 exports.createExecutionHighlights = async (req, res) => {
   try {
-    const { stack, count, service } = req.body;
+    const { stack, count, service, business_service } = req.body;
 
     // Validate required fields
     if (!stack || !count) {
@@ -18,47 +13,32 @@ exports.createExecutionHighlights = async (req, res) => {
       });
     }
 
-    // Check if execution highlights already exist
-    const existingExecutionHighlights = await ExecutionHighlights.findOne({ stack });
-    if (existingExecutionHighlights) {
-      return res.status(403).json({
-        message: [{ key: "error", value: "Execution Highlights Name already exists" }],
-      });
-    }
 
-    if (!req.files?.image) {
-      return res.status(400).json({
-        message: [{ key: "error", value: "Required field: image is missing" }],
-      });
-    }
-
-    const imageFile = req.files.image;
-    const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-
-    // Ensure each `try` has a `catch`
-    const imageUrl = await (async () => {
-      try {
-        const { data, error } = await supabase.storage
-          .from('SmartCliff/services/highlights')
-          .upload(uniqueFileName, imageFile.data);
-
-        if (error) {
-          console.error(error);
-          throw new Error("Error uploading image to Supabase storage");
+        if (!req.files || !req.files.image) {
+            return res.status(400).json({
+                message: [{ key: "error", value: "Image is required" }],
+            });
         }
 
-        return `${supabaseUrl}/storage/v1/object/public/SmartCliff/services/highlights/${uniqueFileName}`;
-      } catch (error) {
-        console.error("Inner try block error:", error);
-        throw new Error("Error during image upload");
-      }
-    })();
+        const imageFile = req.files.image;
+
+        if (imageFile.size > 3 * 1024 * 1024) {
+            return res.status(400).json({
+                message: [{ key: "error", value: "Image size exceeds the 3MB limit" }],
+            });
+        }
+
+        const uniqueFileName = `${Date.now()}_${imageFile.name}`;
+        const uploadPath = path.join(__dirname, "../../uploads/services/highlights", uniqueFileName);
+
+        await imageFile.mv(uploadPath);
 
     const newExecutionHighlights = new ExecutionHighlights({
       stack,
       count,
-      image: imageUrl,
+      image: uniqueFileName,
       service,
+      business_service,
     });
 
     await newExecutionHighlights.save();
@@ -78,13 +58,19 @@ exports.createExecutionHighlights = async (req, res) => {
 
 exports.getAllExecutionHighlights = async (req, res) => {
     try {
-      const executionHighlight = await ExecutionHighlights.find().populate("service");
+      const executionHighlight = await ExecutionHighlights.find().populate("service").populate("business_service");
   
-      
+      const allexecutionHighlight = executionHighlight.map((executionHighlights) => {
+        const serviceObj = executionHighlights.toObject();
+        return {
+            ...serviceObj,
+            image: process.env.BACKEND_URL + "/uploads/services/highlights/" + serviceObj.image, // Append image URL
+        };
+    });
   
       return res.status(200).json({
         message: [{ key: 'success', value: 'Execution Highlights Retrieved successfully' }],
-        getAllExecutionHighlight: executionHighlight,
+        getAllExecutionHighlight: allexecutionHighlight,
       });
     } catch (error) {
       return res.status(500).json({ message: [{ key: 'error', value: 'Internal server error' }] });
@@ -96,13 +82,16 @@ exports.getAllExecutionHighlights = async (req, res) => {
   exports.getExecutionHighlightsById = async (req, res) => {
     const { id } = req.params;
     try {
-      const executionHighlight = await ExecutionHighlights.findById(id).populate("service");
+      const executionHighlight = await ExecutionHighlights.findById(id).populate("service").populate("business_service");
       if (!executionHighlight) {
         return res.status(404).json({ message: [{ key: 'error', value: 'Execution Highlights not found' }] });
       }
       return res.status(200).json({
         message: [{ key: 'success', value: 'Execution Highlights Id based Retrieved successfully' }],
-        serviceById: executionHighlight
+        serviceById: {
+          ...executionHighlight.toObject(),
+          image: process.env.BACKEND_URL + '/uploads/services/highlights/' + executionHighlight.image, // Append image URL
+      },
       });
     } catch (error) {
       console.error(error);
@@ -136,41 +125,35 @@ exports.getAllExecutionHighlights = async (req, res) => {
             }
         }
 
-        if (imageFile) {
-          if (existingExecutionHighlights.image) {
-              try {
-                  const imageUrlParts = existingExecutionHighlights.image.split('/');
-                  const imageName = imageUrlParts[imageUrlParts.length - 1];
+         if (imageFile) {
+                   if (!existingExecutionHighlights) {
+                     return res
+                       .status(404)
+                       .json({ message: { key: "error", value: "highlights not found" } });
+                   }
 
-                  const {data,error} =  await supabase.storage
-                  .from('SmartCliff')
-                  .remove(`services/highlights/${[imageName]}`);
-                 
-              } catch (error) {
-                  console.error(error);
-                  return res.status(500).json({ message: [{ key: "error", value: "Error removing existing image from Supabase storage" }] });
-              }
-          }
-
-          const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-
-          try {
-              const { data, error } = await supabase.storage
-                  .from('SmartCliff/services/highlights')
-                  .upload(uniqueFileName, imageFile.data);
-
-              if (error) {
-                  console.error(error);
-                  return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
-              }
-
-              const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/services/highlights/${uniqueFileName}`;
-              updatedData.image = imageUrl;
-          } catch (error) {
-              console.error(error);
-              return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
-          }
-      }
+                   const imagePathToDelete = path.join(
+                     __dirname,
+                     "../../uploads/services/highlights",
+                     existingExecutionHighlights.image
+                   );
+                   if (fs.existsSync(imagePathToDelete)) {
+                     fs.unlink(imagePathToDelete, (err) => {
+                       if (err) {
+                         console.error("Error deleting image:", err);
+                       }
+                     });
+                   }
+             
+                   const uniqueFileName = `${Date.now()}_${imageFile.name}`;
+                   const uploadPath = path.join(
+                     __dirname,
+                     "../../uploads/services/highlights",
+                     uniqueFileName
+                   );
+                   await imageFile.mv(uploadPath);
+                   updatedData.image = uniqueFileName;
+                 }
 
         const updatedExecutionHighlights = await ExecutionHighlights.findByIdAndUpdate(
             highlightId,
@@ -204,21 +187,13 @@ exports.deleteExecutionHighlights = async (req, res) => {
         return res.status(404).json({ message: [{ key: 'error', value: 'Execution Highlights not found' }] });
       }
   
-      if (executionHighlight.image) {
-        try {
-          
-            const imageUrlParts = executionHighlight.image.split('/');
-            const imageName = imageUrlParts[imageUrlParts.length - 1];
-            const {data,error} =  await supabase.storage
-            .from('SmartCliff')
-            .remove(`services/highlights/${[imageName]}`);
-               
-
-        } catch (error) {
-            console.log(error);
-            return res.status(500).json({ message: [{ key: "error", value: "Error removing image from Supabase storage" }] });
-        }
-    }
+       if (executionHighlight.image) {
+                 const imagePath = path.join(__dirname, "../../uploads/services/highlights", executionHighlight.image);
+                 if (fs.existsSync(imagePath) && fs.lstatSync(imagePath).isFile()) {
+                     fs.unlinkSync(imagePath);
+                 }
+             }
+     
         await ExecutionHighlights.findByIdAndDelete(id);
   
       return res.status(200).json({

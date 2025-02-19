@@ -11,7 +11,6 @@ module.exports.userAuth= (req, res, next) => {
 		const bearerToken = bearer[1];
 		token = bearerToken;
 		req.token = bearerToken;
-
 	}
 	
 	console.log("cookies received", token)

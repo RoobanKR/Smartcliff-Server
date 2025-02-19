@@ -12,6 +12,7 @@ exports.createExecutionOverview = async (req, res) => {
       status,
       year,
       service,
+      business_service,
     } = req.body;
     const newExecutionOverview = new ExecutionOverview({
       type,
@@ -22,6 +23,7 @@ exports.createExecutionOverview = async (req, res) => {
       status,
       year,
       service,
+      business_service,
     });
     await newExecutionOverview.save();
     return res
@@ -41,7 +43,7 @@ exports.createExecutionOverview = async (req, res) => {
 
 exports.getAllExecutionOverviews = async (req, res) => {
   try {
-    const executionOverviews = await ExecutionOverview.find().populate("stack").populate("service");
+    const executionOverviews = await ExecutionOverview.find().populate("stack").populate("service").populate("business_service");
     if (!executionOverviews || executionOverviews.length === 0) {
       return res.status(404).json({ message: [{ key: "error", value: "No Overview found" }] });
     }
@@ -69,7 +71,7 @@ exports.getAllExecutionOverviews = async (req, res) => {
 
 exports.getExecutionOverviewById = async (req, res) => {
   try {
-    const executionOverview = await ExecutionOverview.findById(req.params.id).populate("stack").populate("service");
+    const executionOverview = await ExecutionOverview.findById(req.params.id).populate("stack").populate("service").populate("business_service");
     if (!executionOverview) {
       return res.status(404).json({ message: [{ key: 'error', value: 'Execution Overview not found' }] });
     }

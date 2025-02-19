@@ -23,7 +23,7 @@ const hiringFromUsSchema = new mongoose.Schema({
     required: true,
   },
   count: {
-    type: Number,
+    type: String,
     required: true,
   },
   course: { type: mongoose.Schema.Types.ObjectId, ref: "Course",required: true},

@@ -2,7 +2,7 @@ const Faq = require("../models/faqModal");
  
 exports.createFaq = async (req, res) => {
   try {
-    const { faqItems, course, category, degree_program,service } = req.body;
+    const { faqItems, course, category, degree_program,service, business_service } = req.body;
  
     if (!faqItems || !Array.isArray(faqItems) || faqItems.length === 0) {
       return res
@@ -27,7 +27,8 @@ exports.createFaq = async (req, res) => {
       course,
       category_name: category ? "non-common" : "common",
       degree_program,
-      service
+      service,
+      business_service
     });
  
     // Save the FaqGroup object

@@ -20,7 +20,7 @@ const entrollBatchRoutes = require("./routes/entrollBatchRoutes");
 const degreeProgramRoutes = require("./routes/degreeProgram/degreeProgramRoutes");
 const ourProgramRoutes = require("./routes/degreeProgram/ourProgramRoutes");
 const admissionProcessRoutes = require("./routes/degreeProgram/admissionProcessRoutes");
-// const programMentorRoutes = require("./routes/degreeProgram/programMentorRoutes");
+const programMentorRoutes = require("./routes/degreeProgram/programMentorRoutes");
 const programFeesRoutes = require("./routes/degreeProgram/programFeesRoutes");
 const eligibilityCriteriaRoutes = require("./routes/degreeProgram/eligibilityCriteriaRoutes");
 const semesterRoutes = require("./routes/degreeProgram/semesterRoutes");
@@ -29,7 +29,15 @@ const highlightRoutes = require("./routes/degreeProgram/highlightRoutes");
 const courseApplyNowRoutes = require("./routes/courseApplyNowRoutes");
 const programApplyRoutes = require("./routes/degreeProgram/ApplyProgramRoutes");
 // services
+const businessServicesRoutes = require("./routes/services/businessServicesRoutes");
+
 const servicesRoutes = require("./routes/services/servicesRoutes");
+const servicesAboutRoutes = require("./routes/services/aboutRoutes");
+const servicesProcessRoutes = require("./routes/services/processRoutes");
+const servicesClientRoutes = require("./routes/services/clientRoutes");
+const serviceOpportunityRoutes = require("./routes/services/serviceOppertunityRoutes");
+
+
 const companyLogoRoutes = require("./routes/services/companyLogoRoutes");
 const executionHighlightRoutes = require("./routes/services/executionHighlightsRoutes");
 const executionOverviewRoutes = require("./routes/services/executionOverviewRoutes");
@@ -44,10 +52,12 @@ const hiringApplyRoutes = require("./routes/hiring/hiringApplyRoutes");
 const trainFromUsRoutes = require("./routes/hiring/trainFromUsRoutes");
 const instituteRoutes = require("./routes/hiring/instituteFormRoutes");
 
-// bussiness
+// business
 const keyElementsRoutes = require("./routes/bussiness/keyElementsRoutes");
-const bussinessPlacementsRoutes = require("./routes/bussiness/bussinessPlacementsRoutes");
+const businessPlacementsRoutes = require("./routes/bussiness/bussinessPlacementsRoutes");
 const engagedGovermenceRoutes = require("./routes/bussiness/engagedGovermanceRoutes");
+
+
 
 const path = require("path");
 
@@ -61,9 +71,8 @@ app.use(
     //origin: ["http://localhost:3000", "http://localhost:3535"],
     origin: [
       // "http://localhost:3000",
-      "https://smart-cliff-next-js.vercel.app",
-      // "http://localhost:3535",
-      "https://smart-cliff-admin-n31x.vercel.app"
+      "https://smart-cliff-next-js-fkpr-roobankrs-projects.vercel.app",
+      "http://localhost:3535",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
@@ -111,10 +120,10 @@ app.use(
 //   "/uploads/batches",
 //   express.static(path.join(__dirname, "uploads/batches"))
 // );
-// app.use(
-//   "/uploads/mca/degree_Program",
-//   express.static(path.join(__dirname, "/uploads/mca/degree_Program"))
-// );
+app.use(
+  "/uploads/degreeprogram/degree/images",
+  express.static(path.join(__dirname, "/uploads/degreeprogram/degree/images"))
+);
 // app.use(
 //   "/uploads/mca/our_program",
 //   express.static(path.join(__dirname, "/uploads/mca/our_program"))
@@ -146,14 +155,39 @@ app.use(
 // );
 
 // Services
-// app.use(
-//   "/uploads/services/service",
-//   express.static(path.join(__dirname, "uploads/services/service"))
-// );
+
+
 app.use(
-  "/uploads/services/service/videos",
-  express.static(path.join(__dirname, "uploads/services/service/videos"))
+  "/uploads/services/service/icon",
+  express.static(path.join(__dirname, "uploads/services/service/icon"))
 );
+app.use(
+  "/uploads/services/about/icon",
+  express.static(path.join(__dirname, "uploads/services/about/icon"))
+);
+app.use(
+  "/uploads/services/about/images",
+  express.static(path.join(__dirname, "uploads/services/about/images"))
+);
+app.use(
+  "/uploads/services/process/icon",
+  express.static(path.join(__dirname, "uploads/services/process/icon"))
+);
+app.use(
+  "/uploads/services/client",
+  express.static(path.join(__dirname, "uploads/services/client"))
+);
+
+app.use(
+  "/uploads/services/highlights",
+  express.static(path.join(__dirname, "uploads/services/highlights"))
+);
+
+app.use(
+  "/uploads/services/opportunity",
+  express.static(path.join(__dirname, "uploads/services/opportunity"))
+);
+
 // app.use(
 //   "/uploads/services/company_logo",
 //   express.static(path.join(__dirname, "uploads/services/company_logo"))
@@ -186,7 +220,7 @@ app.use("/",courseRoutes);
 app.use("/",degreeProgramRoutes);
 app.use("/",ourProgramRoutes);
 app.use("/",admissionProcessRoutes);
-// app.use("/",programMentorRoutes);
+app.use("/",programMentorRoutes);
 app.use("/",programFeesRoutes);
 app.use("/",eligibilityCriteriaRoutes);
 app.use("/",semesterRoutes);
@@ -204,6 +238,14 @@ app.use("/", managedCampusRoutes)
 app.use("/",entrollBatchRoutes);
 app.use("/", batchesRoutes)
 
+
+app.use("/", businessServicesRoutes)
+app.use("/", servicesAboutRoutes)
+app.use("/", servicesProcessRoutes)
+app.use("/", servicesClientRoutes)
+app.use("/", serviceOpportunityRoutes)
+
+
 // hiring
 app.use("/",hiringRoutes);
 app.use("/",hireFromUsRoutes);
@@ -211,9 +253,9 @@ app.use("/",hiringApplyRoutes);
 app.use("/",trainFromUsRoutes);
 app.use("/",instituteRoutes);
 
-// bussiness
+// business
 app.use("/",keyElementsRoutes);
-app.use("/",bussinessPlacementsRoutes);
+app.use("/",businessPlacementsRoutes);
 app.use("/",engagedGovermenceRoutes);
 
 
