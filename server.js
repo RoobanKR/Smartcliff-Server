@@ -99,6 +99,7 @@ app.use(
     origin: [
       // "http://localhost:3000",
       "http://smartcliff.academy",
+      "https://smart-cliff-next-js-git-develop-roobankrs-projects.vercel.app/"
       // "http://localhost:3535",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
