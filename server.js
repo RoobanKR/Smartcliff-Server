@@ -98,7 +98,7 @@ app.use(
   cors({
     origin: [
       // "http://localhost:3000",
-      "http://smartcliff.academy",
+      "https://smartcliff.academy/",
       "https://smart-cliff-next-js-git-develop-roobankrs-projects.vercel.app/"
       // "http://localhost:3535",
     ],
