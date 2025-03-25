@@ -1,9 +1,6 @@
 const KeyElements = require("../../models/bussiness/KeyElementsModal");
-const { createClient } = require('@supabase/supabase-js');
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabaseUrl = process.env.SUPABASE_URL;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+const path = require("path");
+const fs = require('fs');
 
 exports.createKeyElements = async (req, res) => {
     try {
@@ -18,51 +15,28 @@ exports.createKeyElements = async (req, res) => {
             return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
         }
 
-        const iconFile = req.files?.icon;
-
-    if (!iconFile) {
-      return res.status(400).json({
-        message: [{ key: "error", value: "Key Elements icon is required" }],
-      });
-    }
-
-    if (iconFile.size > 5 * 1024 * 1024) {
-      return res.status(400).json({
-        message: [
-          {
-            key: "error",
-            value: "Key Elements icon size exceeds the 5MB limit",
-          },
-        ],
-      });
-    }
-
-    const uniqueFileName = `${Date.now()}_${iconFile.name}`;
-
-    try {
-      const { data, error } = await supabase.storage
-        .from('SmartCliff/bussiness/key_elements')
-        .upload(uniqueFileName, iconFile.data);
-
-      if (error) {
-        console.error("Error uploading icon to Supabase:", error);
-        return res.status(500).json({
-          message: [{ key: "error", value: "Error uploading icon to Supabase" }],
-        });
-      }
-
-      const iconUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/bussiness/key_elements/${uniqueFileName}`;
-
+  const iconFile = req.files.icon;
+   
+           if (iconFile.size > 3 * 1024 * 1024) {
+               return res.status(400).json({
+                   message: [{ key: "error", value: "Image size exceeds the 3MB limit" }],
+               });
+           }
+   
+           const uniqueFileName = `${Date.now()}_${iconFile.name}`;
+           const uploadPath = path.join(__dirname, "../../uploads/business/keyelement", uniqueFileName);
+   
+           await iconFile.mv(uploadPath);
+   
             const newKeyElements = new KeyElements({
                 title,
-                icon: iconUrl,
+                icon: uniqueFileName,
             });
 
             await newKeyElements.save();
 
             return res.status(201).json({ message: [{ key: "Success", value: "Key Elements Added Successfully" }] });
-          } catch (error) {           
-          }
+        
         } catch (error) {
           return res
             .status(500)
@@ -74,10 +48,17 @@ exports.createKeyElements = async (req, res) => {
       exports.getAllKeyElements = async (req, res) => {
         try {
           const keyelements = await KeyElements.find();
-      
+          const allOutcomes = keyelements.map((key) => {
+            const keyElementObj = key.toObject();
+            return {
+                ...keyElementObj,
+                icon: process.env.BACKEND_URL + "/uploads/business/keyelement/" + keyElementObj.icon,
+            };
+        });
+    
           return res.status(200).json({
             message: [{ key: 'success', value: 'Key Elements Retrieved successfully' }],
-            All_Key_Elements: keyelements,
+            All_Key_Elements: allOutcomes,
           });
         } catch (error) {
           return res.status(500).json({ message: [{ key: 'error', value: 'Internal server error' }] });
@@ -93,7 +74,10 @@ exports.createKeyElements = async (req, res) => {
           }
           return res.status(200).json({
             message: [{ key: 'success', value: 'Key Elements Id Based Retrieved successfully' }],
-            Key_Element_Id_Based:Keyelement
+            Key_Element_Id_Based:{
+              ...Keyelement.toObject(),
+              icon: process.env.BACKEND_URL + '/uploads/business/keyelement/' + Keyelement.icon,
+          },
           });
         } catch (error) {
           console.error(error);
@@ -117,41 +101,36 @@ exports.createKeyElements = async (req, res) => {
             });
           }
       
-          if (iconFile) {
-            if (existingKeyElements.icon) {
-                try {
-                    const iconUrlParts = existingKeyElements.icon.split('/');
-                    const iconName = iconUrlParts[iconUrlParts.length - 1];
-      
-                    const {data,error} =  await supabase.storage
-                    .from('SmartCliff')
-                    .remove(`bussiness/key_elements/${[iconName]}`);
-                   
-                } catch (error) {
-                    console.error(error);
-                    return res.status(500).json({ message: [{ key: "error", value: "Error removing existing icon from Supabase storage" }] });
-                }
-            }
-      
-            const uniqueFileName = `${Date.now()}_${iconFile.name}`;
-      
-            try {
-                const { data, error } = await supabase.storage
-                    .from('SmartCliff/bussiness/key_elements')
-                    .upload(uniqueFileName, iconFile.data);
-      
-                if (error) {
-                    console.error(error);
-                    return res.status(500).json({ message: [{ key: "error", value: "Error uploading icon to Supabase storage" }] });
-                }
-      
-                const iconUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/bussiness/key_elements/${uniqueFileName}`;
-                updatedData.icon = iconUrl;
-            } catch (error) {
-                console.error(error);
-                return res.status(500).json({ message: [{ key: "error", value: "Error uploading icon to Supabase storage" }] });
-            }
-        }
+            if (iconFile) {
+                      if (!existingKeyElements) {
+                        return res
+                          .status(404)
+                          .json({ message: { key: "error", value: "Key element not found" } });
+                      }
+   
+                      const imagePathToDelete = path.join(
+                        __dirname,
+                        "../../uploads/business/keyelement",
+                        existingKeyElements.icon
+                      );
+                      if (fs.existsSync(imagePathToDelete)) {
+                        fs.unlink(imagePathToDelete, (err) => {
+                          if (err) {
+                            console.error("Error deleting icon:", err);
+                          }
+                        });
+                      }
+                
+                      const uniqueFileName = `${Date.now()}_${iconFile.name}`;
+                      const uploadPath = path.join(
+                        __dirname,
+                        "../../uploads/business/keyelement",
+                        uniqueFileName
+                      );
+                      await iconFile.mv(uploadPath);
+                      updatedData.icon = uniqueFileName;
+                    }
+   
       
           const updatedKeyElements = await KeyElements.findByIdAndUpdate(
             keyId,
@@ -185,20 +164,13 @@ exports.createKeyElements = async (req, res) => {
             return res.status(404).json({ message: [{ key: 'error', value: 'Key Elements not found' }] });
           }
       
-          if (keyElements.icon) {
-            const iconUrlParts = keyElements.icon.split('/');
-            const iconName = iconUrlParts[iconUrlParts.length - 1];
-      
-            try {
-              await supabase.storage
-              .from('SmartCliff')
-              .remove(`bussiness/key_elements/${[iconName]}`);
-            } catch (error) {
-              console.error("Error deleting icon from Supabase:", error);
-            }
-          }
-      
-            await KeyElements.findByIdAndDelete(id);
+ if (keyElements.icon) {
+                       const imagePath = path.join(__dirname, "../../uploads/business/keyelement", keyElements.icon);
+                       if (fs.existsSync(imagePath) && fs.lstatSync(imagePath).isFile()) {
+                           fs.unlinkSync(imagePath);
+                       }
+                   }
+                               await KeyElements.findByIdAndDelete(id);
       
           return res.status(200).json({
             message: [{ key: 'success', value: 'Key Elements deleted successfully' }],

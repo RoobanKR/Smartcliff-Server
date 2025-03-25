@@ -111,7 +111,6 @@ exports.getManagedCampusById = async (req, res) => {
        if (!managedCampus) {
       return res.status(404).json({ message: [{ key: "error", value: "Managed Campus not found" }] });
     }
-    // Construct image URLs for each campus service, execution highlights, gallery, our_client, and service_testimonial (same as in getAllManagedCampus)
     const populatedManagedCampus = {
       ...managedCampus._doc,
       service: {
@@ -226,7 +225,6 @@ exports.getManagedCampusById = async (req, res) => {
     };
     
     
-    // Delete a Managed Campus
     exports.deleteManagedCampus = async (req, res) => {
       const { id } = req.params;
       try {

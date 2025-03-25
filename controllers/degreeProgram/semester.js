@@ -2,12 +2,12 @@ const Semester = require("../../models/degreeprogram/SemesterModal");
 
 exports.createSemester = async (req, res) => {
   try {
-    const { description, semester,degree_program } = req.body;
+    const { description, semester,service, business_service, college, degree_program } = req.body;
 
     const newSemester = new Semester({
         description,
         semester,
-        degree_program,
+        service, business_service, college, degree_program,
     });
 
     await newSemester.save();
@@ -21,7 +21,10 @@ exports.createSemester = async (req, res) => {
 
 exports.getAllSemesters = async (req, res) => {
   try {
-    const semesters = await Semester.find().populate("degree_program");
+    const semesters = await Semester.find().populate("degree_program")
+    .populate("service")
+    .populate("business_service")
+    .populate("college");
     return res.status(200).json({
       message: [{ key: "success", value: "Semesters Retrieved successfully" }],
       semester: semesters,
@@ -37,7 +40,10 @@ exports.getAllSemesters = async (req, res) => {
 exports.getSemesterById = async (req, res) => {
   const { id } = req.params;
   try {
-    const semester = await Semester.findById(id).populate("degree_program");
+    const semester = await Semester.findById(id).populate("degree_program")
+    .populate("service")
+    .populate("business_service")
+    .populate("college");
     if (!semester) {
       return res.status(404).json({ message: "Semester not found" });
     }
@@ -55,7 +61,7 @@ exports.getSemesterById = async (req, res) => {
 
 exports.updateSemester = async (req, res) => {
   const { id } = req.params;
-  const { semester, degree_program,description } = req.body;
+  const { semester, service, business_service, college, degree_program,description } = req.body;
 
   try {
     const existingSemester = await Semester.findById(id);
@@ -71,6 +77,7 @@ exports.updateSemester = async (req, res) => {
 
     for (const item of semester) {
       const {
+        semester,
         heading,
         subheading,
         submain,
@@ -84,6 +91,7 @@ exports.updateSemester = async (req, res) => {
       }
 
       semesterObjects.push({
+        semester,
         heading,
         subheading,
         submain,
@@ -95,6 +103,9 @@ exports.updateSemester = async (req, res) => {
     existingSemester.description = description;
 
     existingSemester.semester = semesterObjects;
+    existingSemester.business_service = business_service;
+    existingSemester.service = service;
+    existingSemester.college = college;
     existingSemester.degree_program = degree_program;
 
     await existingSemester.save();

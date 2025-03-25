@@ -5,8 +5,13 @@ const DegreeProgramSchema = new mongoose.Schema({
   slogan: { type: String, required: true },
   title: { type: String, required: true },
   description: { type: String, required: true },
+  location: { type: String, required: true },
+
   images: [{type: String,required:true,max: 5 * 1024 * 1024}],
   slug: { type: String, required: true },
+  service: { type: mongoose.Schema.Types.ObjectId, ref: "Services",required: true},
+  business_service: { type: mongoose.Schema.Types.ObjectId, ref: 'business_service', required: true }, 
+  college: [{ type: mongoose.Schema.Types.ObjectId, ref: "College",default:null}],
 
 //   lastModifiedBy: { type: String, required: true },
 //   lastModifiedOn: { type: Date, default: Date.now },

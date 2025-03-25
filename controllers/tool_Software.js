@@ -1,11 +1,6 @@
-const { createClient } = require('@supabase/supabase-js');
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabaseUrl = process.env.SUPABASE_URL;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-const Software = require("../models/Tools_Software");
-
+const Software = require("../models/Tools_SoftwareModal");
+const path = require("path");
+const fs = require("fs");
 exports.createToolSoftware = async (req, res) => {
   try {
     const { software_name, description, category } = req.body;
@@ -16,45 +11,24 @@ exports.createToolSoftware = async (req, res) => {
       });
     }
 
-    const imageFile = req.files?.image;
-
-    if (!imageFile) {
-      return res.status(400).json({
-        message: [{ key: "error", value: "Tool & Software image is required" }],
-      });
+    if (!req.files || !req.files.image) {
+      return res.status(400).json({ message: [{ key: "error", value: "Image is required" }] });
     }
 
-    if (imageFile.size > 5 * 1024 * 1024) {
-      return res.status(400).json({
-        message: [
-          {
-            key: "error",
-            value: "Tool & Software image size exceeds the 5MB limit",
-          },
-        ],
-      });
+    const imageFile = req.files.image;
+    if (imageFile.size > 3 * 1024 * 1024) {
+      return res.status(400).json({ message: [{ key: "error", value: "Image size exceeds the 3MB limit" }] });
     }
 
     const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-
-    const { data, error } = await supabase.storage
-      .from('SmartCliff/courses/tool_software')
-      .upload(uniqueFileName, imageFile.data);
-
-    if (error) {
-      console.error("Error uploading image to Supabase:", error);
-      return res.status(500).json({
-        message: [{ key: "error", value: "Error uploading image to Supabase" }],
-      });
-    }
-
-    const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/courses/tool_software/${uniqueFileName}`;
+    const uploadPath = path.join(__dirname, "../uploads/courses/toolsoftware", uniqueFileName);
+    await imageFile.mv(uploadPath);
 
     const newToolSoftware = new Software({
       software_name,
       description,
       category:typeof category === "string" ? category.split(","): Array.isArray(category) ? category : [],  
-      image: imageUrl,
+      image: uniqueFileName,
     });
 
     await newToolSoftware.save();
@@ -74,10 +48,17 @@ exports.getAllToolSoftware = async (req, res) => {
       const toolSoftware = await Software.find().populate('category');
 
     
+      const allToolsSoftware = toolSoftware.map((tools) => {
+        const toolsObj = tools.toObject();
+        return {
+            ...toolsObj,
+            image: process.env.BACKEND_URL + "/uploads/courses/toolsoftware/" + toolsObj.image,
+        };
+    });
 
     return res.status(200).json({
       message: [{ key: "success", value: "Tool & Software Retrieved successfully" }],
-      toolSoftware: toolSoftware,
+      toolSoftware: allToolsSoftware,
     });
   } catch (error) {
     console.error("Error retrieving Tool & Software:", error);
@@ -100,7 +81,10 @@ exports.getToolSoftwareById = async (req, res) => {
 
     return res.status(200).json({
       message: [{ key: "success", value: "Tool & Software Retrieved successfully" }],
-      toolSoftware:software
+      toolSoftware:{
+        ...software.toObject(),
+        image: process.env.BACKEND_URL + '/uploads/courses/toolsoftware/' + software.image
+    },
     });
   } catch (error) {
     return res.status(500).json({
@@ -115,7 +99,6 @@ exports.updateToolSoftware = async (req, res) => {
     const { software_name, description, category } = req.body;
     const imageFile = req.files?.image;
 
-    // Find the existing tool software
     const existingSoftware = await Software.findById(id);
 
     if (!existingSoftware) {
@@ -124,50 +107,22 @@ exports.updateToolSoftware = async (req, res) => {
       });
     }
 
-    // If there is a new image, remove the existing one from Supabase
     if (imageFile) {
       if (existingSoftware.image) {
-        try {
-          const imageUrlParts = existingSoftware.image.split("/");
-          const imageName = imageUrlParts[imageUrlParts.length - 1];
-
-          const { error } = await supabase.storage
-           .from('SmartCliff')
-          .remove(`courses/tool_software/${[imageName]}`);
-
-
-          if (error) {
-            console.error("Error removing existing image from Supabase:", error);
-            return res.status(500).json({
-              message: [{ key: "error", value: "Error removing existing image from Supabase" }],
-            });
-          }
-        } catch (removeError) {
-          console.error("Error during image removal:", removeError);
-          return res.status(500).json({
-            message: [{ key: "error", value: "Internal server error" }],
-          });
+        const imagePathToDelete = path.join(__dirname, "../uploads/courses/toolsoftware", existingSoftware.image);
+        if (fs.existsSync(imagePathToDelete)) {
+          fs.unlinkSync(imagePathToDelete);
         }
       }
 
-      // Upload the new image to Supabase
       const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from('SmartCliff/courses/tool_software')
-        .upload(uniqueFileName, imageFile.data);
+      const uploadPath = path.join(__dirname, "../uploads/courses/toolsoftware", uniqueFileName);
+      await imageFile.mv(uploadPath);
 
-      if (uploadError) {
-        console.error("Error uploading new image to Supabase:", uploadError);
-        return res.status(500).json({
-          message: [{ key: "error", value: "Error uploading new image to Supabase" }],
-        });
-      }
-
-      const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/courses/tool_software/${uniqueFileName}`;
-      existingSoftware.image = imageUrl;
+      existingSoftware.image = uniqueFileName;
     }
+  
 
-    // Update the software details
     existingSoftware.software_name = software_name;
     existingSoftware.description = description;
     existingSoftware.category = Array.isArray(category) ? category : category.split(",");
@@ -195,20 +150,12 @@ exports.deleteToolSoftware = async (req, res) => {
       });
     }
 
-    if (software.image) {
-      const imageUrlParts = software.image.split("/");
-      const imageName = imageUrlParts[imageUrlParts.length - 1];
-
-      try {
-        const { error } = await supabase.storage
-          .from('SmartCliff')
-          .remove(`courses/tool_software/${[imageName]}`);
-
-      } catch (error) {
-        console.error("Error deleting image from Supabase:", error);
-      }
-    }
-
+  if (software.image) {
+                             const imagePath = path.join(__dirname, "../uploads/courses/toolsoftware", software.image);
+                             if (fs.existsSync(imagePath) && fs.lstatSync(imagePath).isFile()) {
+                                 fs.unlinkSync(imagePath);
+                             }
+                         }
     await Software.findByIdAndDelete(id);
 
     return res.status(200).json({

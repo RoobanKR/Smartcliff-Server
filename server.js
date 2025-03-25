@@ -5,7 +5,7 @@ const app = express();
 const fileUpload = require("express-fileupload");
 const cookieParser = require("cookie-parser");
 const userAuth = require("./routes/userAuth");
-const wcuRoutes = require("./routes/wcuRoutes");
+const wcuRoutes = require("./routes/about/wcuRoutes");
 const faqRoutes = require("./routes/faqRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const careerOppertunitiesRoutes = require("./routes/careerOppertunitiesRoutes");
@@ -15,12 +15,18 @@ const instructorRoutes = require("./routes/instructorRoutes");
 const courseRoutes = require("./routes/courseRoutes");
 const batchesRoutes = require("./routes/batchRoutes");
 const entrollBatchRoutes = require("./routes/entrollBatchRoutes");
-
+const enquiryRoutes = require("./routes/enquiryRoutes");
+const contactRoutes = require("./routes/contactRoutes");
+const careerFormRoutes = require("./routes/careerFormRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
+const joinUsRoutes = require("./routes/joinUsRoutes");
+const galleryRoutes = require("./routes/galleryRoutes");
+const careerRoutes = require("./routes/carrerRoutes");
 
 const degreeProgramRoutes = require("./routes/degreeProgram/degreeProgramRoutes");
 const ourProgramRoutes = require("./routes/degreeProgram/ourProgramRoutes");
 const admissionProcessRoutes = require("./routes/degreeProgram/admissionProcessRoutes");
-const programMentorRoutes = require("./routes/degreeProgram/programMentorRoutes");
+const targetStudentRoutes = require("./routes/degreeProgram/targetStudentRoutes");
 const programFeesRoutes = require("./routes/degreeProgram/programFeesRoutes");
 const eligibilityCriteriaRoutes = require("./routes/degreeProgram/eligibilityCriteriaRoutes");
 const semesterRoutes = require("./routes/degreeProgram/semesterRoutes");
@@ -28,7 +34,13 @@ const outcomeRoutes = require("./routes/degreeProgram/outcomeRoutes");
 const highlightRoutes = require("./routes/degreeProgram/highlightRoutes");
 const courseApplyNowRoutes = require("./routes/courseApplyNowRoutes");
 const programApplyRoutes = require("./routes/degreeProgram/ApplyProgramRoutes");
+const ourPartnersRoutes = require("./routes/degreeProgram/ourPartnersRoutes");
+const ourSponosrsRoutes = require("./routes/degreeProgram/ourSponosorsRoutes");
+const collegeRoutes = require("./routes/degreeProgram/collegeRoutes");
+const certificationRoutes = require("./routes/degreeProgram/certificationRoutes");
+
 // services
+
 const businessServicesRoutes = require("./routes/services/businessServicesRoutes");
 
 const servicesRoutes = require("./routes/services/servicesRoutes");
@@ -36,7 +48,7 @@ const servicesAboutRoutes = require("./routes/services/aboutRoutes");
 const servicesProcessRoutes = require("./routes/services/processRoutes");
 const servicesClientRoutes = require("./routes/services/clientRoutes");
 const serviceOpportunityRoutes = require("./routes/services/serviceOppertunityRoutes");
-
+const placementTrainingTrackRoutes = require("./routes/services/placementTrainingTrackRoutes");
 
 const companyLogoRoutes = require("./routes/services/companyLogoRoutes");
 const executionHighlightRoutes = require("./routes/services/executionHighlightsRoutes");
@@ -44,6 +56,7 @@ const executionOverviewRoutes = require("./routes/services/executionOverviewRout
 const serviceTestimonialRoutes = require("./routes/services/serviceTestimonialRoutes");
 const serviceGalleryRoutes = require("./routes/services/galleryRoutes");
 const managedCampusRoutes = require("./routes/services/managedCampusRoutes");
+const skillVerticalRoutes = require("./routes/degreeProgram/skillVerticalRoutes");
 
 // hiring
 const hiringRoutes = require("./routes/hiring/hiringRoutes");
@@ -56,6 +69,21 @@ const instituteRoutes = require("./routes/hiring/instituteFormRoutes");
 const keyElementsRoutes = require("./routes/bussiness/keyElementsRoutes");
 const businessPlacementsRoutes = require("./routes/bussiness/bussinessPlacementsRoutes");
 const engagedGovermenceRoutes = require("./routes/bussiness/engagedGovermanceRoutes");
+const learningJourneyRoutes = require("./routes/bussiness/learningJourneyRoutes");
+const wcyRoutes = require("./routes/bussiness/WCYHireRoutes");
+const howItWorksRoutes = require("./routes/bussiness/howItWorksRoutes");
+const currentAvialbilityRoutes = require("./routes/bussiness/currentAvailabilityRoutes");
+
+// home service 
+const homeServicesRoutes = require("./routes/home/homeSerivesRoutes");
+
+// About 
+const aboutAboutUsRoutes = require("./routes/about/aboutUsRoutes");
+const visionMissionUsRoutes = require("./routes/about/visionmissionRoutes");
+const shineRoutes = require("./routes/about/shineRoutes");
+const yearlyServicesRoutes = require("./routes/about/yearlyServicesRoutes");
+
+
 
 
 
@@ -68,11 +96,10 @@ connectDB();
 app.use(express.json({ extended: false }));
 app.use(
   cors({
-    //origin: ["http://localhost:3000", "http://localhost:3535"],
     origin: [
       // "http://localhost:3000",
-      "https://smart-cliff-next-js.vercel.app",
-      "http://localhost:3535",
+      "http://smartcliff.academy",
+      // "http://localhost:3535",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
@@ -83,127 +110,9 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use(fileUpload());
-app.use(
-  "/uploads/users",
-  express.static(path.join(__dirname, "uploads/users"))
-);
-app.use(
-  "/uploads/users",
-  express.static(path.join(__dirname, "uploads/users"))
-);
 
-app.use(
-  "/uploads/super_admin",
-  express.static(path.join(__dirname, "uploads/super_admin"))
-);
-// app.use(
-//   "/uploads/category",
-//   express.static(path.join(__dirname, "uploads/category"))
-// );
-// app.use(
-//   "/uploads/career_opportunities",
-//   express.static(path.join(__dirname, "uploads/career_opportunities"))
-// );
-// app.use(
-//   "/uploads/tool_software",
-//   express.static(path.join(__dirname, "uploads/tool_software"))
-// );
-// app.use(
-//   "/uploads/instructor",
-//   express.static(path.join(__dirname, "uploads/instructor"))
-// );
-// app.use(
-//   "/uploads/course",
-//   express.static(path.join(__dirname, "uploads/course"))
-// );
-// app.use(
-//   "/uploads/batches",
-//   express.static(path.join(__dirname, "uploads/batches"))
-// );
-app.use(
-  "/uploads/degreeprogram/degree/images",
-  express.static(path.join(__dirname, "/uploads/degreeprogram/degree/images"))
-);
-// app.use(
-//   "/uploads/mca/our_program",
-//   express.static(path.join(__dirname, "/uploads/mca/our_program"))
-// );
-// app.use(
-//   "/uploads/mca/assesment",
-//   express.static(path.join(__dirname, "/uploads/mca/assesment"))
-// );
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// app.use(
-//   "/uploads/mca/program_mentor",
-//   express.static(path.join(__dirname, "/uploads/mca/program_mentor"))
-// );
-// app.use(
-//   "/uploads/mca/program_fees",
-//   express.static(path.join(__dirname, "/uploads/mca/program_fees"))
-// );
-// app.use(
-//   "/uploads/mca/eligibility_criteria",
-//   express.static(path.join(__dirname, "/uploads/mca/eligibility_criteria"))
-// );
-// app.use(
-//   "/uploads/mca/outcome",
-//   express.static(path.join(__dirname, "/uploads/mca/outcome"))
-// );
-// app.use(
-//   "/uploads/program_apply",
-//   express.static(path.join(__dirname, "uploads/program_apply"))
-// );
-
-// Services
-
-
-app.use(
-  "/uploads/services/service/icon",
-  express.static(path.join(__dirname, "uploads/services/service/icon"))
-);
-app.use(
-  "/uploads/services/about/icon",
-  express.static(path.join(__dirname, "uploads/services/about/icon"))
-);
-app.use(
-  "/uploads/services/about/images",
-  express.static(path.join(__dirname, "uploads/services/about/images"))
-);
-app.use(
-  "/uploads/services/process/icon",
-  express.static(path.join(__dirname, "uploads/services/process/icon"))
-);
-app.use(
-  "/uploads/services/client",
-  express.static(path.join(__dirname, "uploads/services/client"))
-);
-
-app.use(
-  "/uploads/services/highlights",
-  express.static(path.join(__dirname, "uploads/services/highlights"))
-);
-
-app.use(
-  "/uploads/services/opportunity",
-  express.static(path.join(__dirname, "uploads/services/opportunity"))
-);
-
-// app.use(
-//   "/uploads/services/company_logo",
-//   express.static(path.join(__dirname, "uploads/services/company_logo"))
-// );
-// app.use(
-//   "/uploads/services/execution_highlights",
-//   express.static(path.join(__dirname, "uploads/services/execution_highlights"))
-// );
-// app.use(
-//   "/uploads/services/testimonial",
-//   express.static(path.join(__dirname, "uploads/services/testimonial"))
-// );
-// app.use(
-//   "/uploads/services/gallery",
-//   express.static(path.join(__dirname, "uploads/services/gallery"))
-// );
 //Home route
 app.get("/", (req, res) => res.send("API Running"));
 
@@ -220,7 +129,7 @@ app.use("/",courseRoutes);
 app.use("/",degreeProgramRoutes);
 app.use("/",ourProgramRoutes);
 app.use("/",admissionProcessRoutes);
-app.use("/",programMentorRoutes);
+app.use("/",targetStudentRoutes);
 app.use("/",programFeesRoutes);
 app.use("/",eligibilityCriteriaRoutes);
 app.use("/",semesterRoutes);
@@ -237,6 +146,31 @@ app.use("/", serviceGalleryRoutes)
 app.use("/", managedCampusRoutes)
 app.use("/",entrollBatchRoutes);
 app.use("/", batchesRoutes)
+app.use("/", enquiryRoutes)
+app.use("/", contactRoutes)
+app.use("/", careerFormRoutes)
+app.use("/", reviewRoutes)
+app.use("/", joinUsRoutes)
+app.use("/", galleryRoutes)
+app.use("/", ourPartnersRoutes)
+app.use("/", ourSponosrsRoutes)
+app.use("/",careerRoutes)
+app.use("/",collegeRoutes)
+app.use("/",certificationRoutes)
+
+app.use("/",skillVerticalRoutes)
+
+// home
+app.use("/", homeServicesRoutes)
+
+// Abbout
+app.use("/", aboutAboutUsRoutes)
+app.use("/", visionMissionUsRoutes)
+app.use("/", shineRoutes)
+app.use("/", yearlyServicesRoutes)
+
+
+
 
 
 app.use("/", businessServicesRoutes)
@@ -244,7 +178,7 @@ app.use("/", servicesAboutRoutes)
 app.use("/", servicesProcessRoutes)
 app.use("/", servicesClientRoutes)
 app.use("/", serviceOpportunityRoutes)
-
+app.use("/",placementTrainingTrackRoutes);
 
 // hiring
 app.use("/",hiringRoutes);
@@ -257,6 +191,11 @@ app.use("/",instituteRoutes);
 app.use("/",keyElementsRoutes);
 app.use("/",businessPlacementsRoutes);
 app.use("/",engagedGovermenceRoutes);
+app.use("/",learningJourneyRoutes);
+app.use("/",wcyRoutes);
+app.use("/",howItWorksRoutes);
+app.use("/",currentAvialbilityRoutes);
+
 
 
 

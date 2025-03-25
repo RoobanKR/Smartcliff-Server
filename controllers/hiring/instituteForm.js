@@ -20,6 +20,10 @@ exports.createInstituteForm = async (req, res) => {
       duration,
       duration_type,
     } = req.body;
+      const existingHireFormUs = await InstituteForm.findOne({email});
+      if (existingHireFormUs) {
+        return res.status(403).json({ message: [{ key: "error", value: "Email exists" }] });
+      }
 
     if (
       !name ||

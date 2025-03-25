@@ -5,7 +5,7 @@ const careerOppertunitiesSchema = new mongoose.Schema({
   description: { type: String, required: true },
 
   image: {
-    type: String, // Assuming you will store a URL to the profile picture
+    type: String, 
 },
 course: { type: mongoose.Schema.Types.ObjectId, ref: "Course",required: true},
 

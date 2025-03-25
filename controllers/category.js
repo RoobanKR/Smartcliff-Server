@@ -1,8 +1,7 @@
 const Category = require("../models/CategoryModal");
-const { createClient } = require('@supabase/supabase-js');
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const path = require("path")
+const fs = require('fs');
+
 
 exports.createCategory = async (req, res) => {
   try {
@@ -17,32 +16,29 @@ exports.createCategory = async (req, res) => {
       return res.status(403).json({ message: [{ key: "error", value: "Category Name already exists" }] });
     }
 
-    const imageFile = req.files?.image;
-    if (!imageFile) {
-      return res.status(400).json({ message: [{ key: "error", value: "Category image is required" }] });
-    }
-    if (imageFile.size > 5 * 1024 * 1024) {
-      return res.status(400).json({
-        message: [{ key: "error", value: "Category image size exceeds the 5MB limit" }],
-      });
-    }
-
-    const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-    const { error } = await supabase.storage
-      .from('SmartCliff/courses/category')
-      .upload(uniqueFileName, imageFile.data);
-
-    if (error) {
-      console.error("Error uploading image to Supabase:", error);
-      return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
-    }
-
-    const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/courses/category/${uniqueFileName}`;
+           if (!req.files || !req.files.image) {
+               return res.status(400).json({
+                   message: [{ key: "error", value: "Image is required" }],
+               });
+           }
+   
+           const imageFile = req.files.image;
+   
+           if (imageFile.size > 3 * 1024 * 1024) {
+               return res.status(400).json({
+                   message: [{ key: "error", value: "Image size exceeds the 3MB limit" }],
+               });
+           }
+   
+           const uniqueFileName = `${Date.now()}_${imageFile.name}`;
+           const uploadPath = path.join(__dirname, "../uploads/courses/category", uniqueFileName);
+   
+           await imageFile.mv(uploadPath);
 
     const newCategory = new Category({
       category_name,
       description,
-      image: imageUrl,
+      image: uniqueFileName,
     });
     await newCategory.save();
 
@@ -59,15 +55,21 @@ exports.createCategory = async (req, res) => {
 
 exports.getAllCategory = async (req, res) => {
   try {
-    const category = await Category.find();
+    const allcategory = await Category.find();
 
-    if (!category || category.length === 0) {
+    if (!allcategory || allcategory.length === 0) {
       return res
         .status(404)
         .json({ message: [{ key: "error", value: "No category found" }] });
     }
 
-   
+    const category = allcategory.map((clientss) => {
+      const serviceObj = clientss.toObject();
+      return {
+          ...serviceObj,
+          image: process.env.BACKEND_URL + "/uploads/courses/category/" + serviceObj.image,
+      };
+  });
 
     return res.status(200).json({
       message: [{ key: "success", value: "Category getted" }],
@@ -95,7 +97,10 @@ exports.getCategoryById = async (req, res) => {
 
     return res.status(200).json({
       message: [{ key: "success", value: "Category getById Success" }],
-      Category: category,
+      Category:{
+        ...category.toObject(),
+        image: process.env.BACKEND_URL + '/uploads/courses/category/' + category.image, 
+    },
     });
   } catch (error) {
     console.error(error);
@@ -122,49 +127,35 @@ exports.updateCategory = async (req, res) => {
     }
 
     if (imageFile) {
-      if (imageFile.size > 5 * 1024 * 1024) {
-        return res.status(400).json({ message: [{ key: "error", value: "Category image size exceeds the 5MB limit" }] });
-      }
+      const imagePathToDelete = path.join(
+        __dirname,
+        "../uploads/courses/category",
+        existingCategory.image
+      );
 
-      // Remove the existing image from Supabase if there's one
-      if (existingCategory.image) {
-        try {
-          const imageUrlParts = existingCategory.image.split('/');
-          const imageName = imageUrlParts[imageUrlParts.length - 1];
-          const { error } = await supabase.storage
-          .from('SmartCliff')
-          .remove(`courses/category/${[imageName]}`);
-          if (error) {
-            throw new Error("Error removing existing image from Supabase storage");
+      if (fs.existsSync(imagePathToDelete)) {
+        fs.unlink(imagePathToDelete, (err) => {
+          if (err) {
+            console.error("Error deleting image:", err);
           }
-        } catch (removeError) {
-          console.error(removeError);
-          return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
-        }
+        });
       }
 
-      // Upload the new image
       const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from('SmartCliff/courses/category')
-        .upload(uniqueFileName, imageFile.data);
+      const uploadPath = path.join(__dirname, "../uploads/courses/category", uniqueFileName);
 
-      if (uploadError) {
-        console.error(uploadError);
-        return res.status(500).json({ message: [{ key: "error", value: "Error uploading image to Supabase storage" }] });
-      }
-
-      const imageUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/courses/category/${uniqueFileName}`;
-      existingCategory.image = imageUrl;
+      await imageFile.mv(uploadPath);
+      existingCategory.image = uniqueFileName; 
     }
 
-    // Update category data
     existingCategory.category_name = category_name;
     existingCategory.description = description;
 
     await existingCategory.save();
 
-    return res.status(200).json({ message: [{ key: "success", value: "Category updated successfully" }] });
+    return res.status(200).json({
+      message: [{ key: "success", value: "Category updated successfully" }],
+    });
   } catch (error) {
     console.error("Error updating category:", error);
     return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
@@ -182,22 +173,14 @@ exports.deleteCategory = async (req, res) => {
       return res.status(404).json({ message: [{ key: "error", value: "Category not found" }] });
     }
 
-    // If the category has an associated image in Supabase storage, delete it
-    if (existingCategory.image) {
-      try {
-        const imageUrlParts = existingCategory.image.split("/");
-        const imageName = imageUrlParts[imageUrlParts.length - 1];
+             if (existingCategory.image) {
+                       const imagePath = path.join(__dirname, "../uploads/courses/category", existingCategory.image);
+                       if (fs.existsSync(imagePath) && fs.lstatSync(imagePath).isFile()) {
+                           fs.unlinkSync(imagePath);
+                       }
+                   }
+           
 
-        const { error } = await supabase.storage
-        .from('SmartCliff')
-        .remove(`courses/category/${[imageName]}`);
-
-      } catch (err) {
-        console.error("Error while deleting category image from Supabase storage:", err);
-      }
-    }
-
-    // Now delete the category from the database
     await Category.deleteOne({ _id: categoryId });
 
     return res.status(200).json({ message: [{ key: "success", value: "Category deleted successfully" }] });
@@ -206,3 +189,6 @@ exports.deleteCategory = async (req, res) => {
     return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };
+
+
+

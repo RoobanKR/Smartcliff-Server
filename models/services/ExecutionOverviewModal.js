@@ -6,25 +6,28 @@ const executionOverviewSchema = new mongoose.Schema({
         enum: ['Clientname', 'Institution Name', 'Industry Partner', 'College Name'],
         required: true
     }],
-    typeName: [String], // Array of type names
-    batchName: {
+    typeName: [{
         type: String,
         required: true
-    },
+    }],
     stack: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Execution_Highlights', // Assuming ExecutionHighlights is another model
+        ref: 'Execution_Highlights',
         required: true
     },
     duration: {
         type: String,
         required: true
     },
-    status: {
-        type: String,
-        enum: ['completed', 'in-progress'],
+    batch_size: {
+        type: Number,
         required: true
     },
+    image: {
+        type: String,
+        required: true
+    },
+
     year: {
         type: Number,
         required: true

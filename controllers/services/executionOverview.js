@@ -1,38 +1,63 @@
 const ExecutionOverview = require("../../models/services/ExecutionOverviewModal");
+const path = require("path");
+const fs = require("fs");
 
-// Create a new execution overview
 exports.createExecutionOverview = async (req, res) => {
   try {
-    const {
+    let {
       type,
       typeName,
-      batchName,
       stack,
       duration,
-      status,
       year,
+      batch_size,
       service,
       business_service,
     } = req.body;
+
+
+    if (!req.files || !req.files.image) {
+      return res.status(400).json({
+        message: [{ key: "error", value: "Image is required" }],
+      });
+    }
+
+    const imageFile = req.files.image;
+
+    if (imageFile.size > 3 * 1024 * 1024) {
+      return res.status(400).json({
+        message: [{ key: "error", value: "Image size exceeds the 3MB limit" }],
+      });
+    }
+
+    const uniqueFileName = `${Date.now()}_${imageFile.name}`;
+    const uploadPath = path.join(
+      __dirname,
+      "../../uploads/services/executionoverview",
+      uniqueFileName
+    );
+
+    await imageFile.mv(uploadPath);
+
     const newExecutionOverview = new ExecutionOverview({
-      type,
-      typeName,
-      batchName,
+      type: Array.isArray(type) ? type : JSON.parse(type),
+      typeName: Array.isArray(typeName) ? typeName : JSON.parse(typeName),   
       stack,
+      batch_size,
       duration,
-      status,
+      image: uniqueFileName,
       year,
       service,
       business_service,
     });
+
     await newExecutionOverview.save();
-    return res
-      .status(201)
-      .json({
-        message: [
-          { key: "Success", value: "Execution Overview Added Successfully" },
-        ],
-      });
+
+    return res.status(201).json({
+      message: [
+        { key: "Success", value: "Execution Overview Added Successfully" },
+      ],
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
@@ -43,23 +68,30 @@ exports.createExecutionOverview = async (req, res) => {
 
 exports.getAllExecutionOverviews = async (req, res) => {
   try {
-    const executionOverviews = await ExecutionOverview.find().populate("stack").populate("service").populate("business_service");
+    const executionOverviews = await ExecutionOverview.find()
+      .populate("stack")
+      .populate("service")
+      .populate("business_service");
     if (!executionOverviews || executionOverviews.length === 0) {
-      return res.status(404).json({ message: [{ key: "error", value: "No Overview found" }] });
+      return res
+        .status(404)
+        .json({ message: [{ key: "error", value: "No Overview found" }] });
     }
-
-    const overviewsWithFormattedImages = executionOverviews.map(overview => {
-      if (overview.stack && overview.stack.image) {
-        if (!overview.stack.image.startsWith(`${process.env.BACKEND_URL}/uploads/services/execution_highlights`)) {
-          overview.stack.image = `${process.env.BACKEND_URL}/uploads/services/execution_highlights/${overview.stack.image}`;
-        }
-      }
-      return overview;
+    const AllExecutionOverviews = executionOverviews.map((overview) => {
+      const overviewObj = overview.toObject();
+      return {
+        ...overviewObj,
+        image:
+          process.env.BACKEND_URL +
+          "/uploads/services/executionoverview/" +
+          overviewObj.image,
+      };
     });
-
     return res.status(200).json({
-      message: [{ key: "success", value: "Execution Overview Retrieved successfully" }],
-      getAllExecutionOverviews: overviewsWithFormattedImages,
+      message: [
+        { key: "success", value: "Execution Overview Retrieved successfully" },
+      ],
+      getAllExecutionOverviews: AllExecutionOverviews,
     });
   } catch (error) {
     console.error(error);
@@ -71,14 +103,16 @@ exports.getAllExecutionOverviews = async (req, res) => {
 
 exports.getExecutionOverviewById = async (req, res) => {
   try {
-    const executionOverview = await ExecutionOverview.findById(req.params.id).populate("stack").populate("service").populate("business_service");
+    const executionOverview = await ExecutionOverview.findById(req.params.id)
+      .populate("stack")
+      .populate("service")
+      .populate("business_service");
     if (!executionOverview) {
-      return res.status(404).json({ message: [{ key: 'error', value: 'Execution Overview not found' }] });
-    }
-    if (executionOverview.stack && executionOverview.stack.image) {
-      if (!executionOverview.stack.image.startsWith(`${process.env.BACKEND_URL}/uploads/services/execution_highlights`)) {
-        executionOverview.stack.image = `${process.env.BACKEND_URL}/uploads/services/execution_highlights/${executionOverview.stack.image}`;
-      }
+      return res
+        .status(404)
+        .json({
+          message: [{ key: "error", value: "Execution Overview not found" }],
+        });
     }
     return res.status(200).json({
       message: [
@@ -87,7 +121,13 @@ exports.getExecutionOverviewById = async (req, res) => {
           value: "Execution Overview Retrieved successfully",
         },
       ],
-      getExecutionOverviewById: executionOverview,
+      getExecutionOverviewById: {
+        ...executionOverview.toObject(),
+        image:
+          process.env.BACKEND_URL +
+          "/uploads/services/executionoverview/" +
+          executionOverview.image,
+      },
     });
   } catch (error) {
     console.error(error);
@@ -100,39 +140,74 @@ exports.getExecutionOverviewById = async (req, res) => {
 exports.updateExecutionOverview = async (req, res) => {
   try {
     const overviewId = req.params.id;
-    const updatedData = req.body;
+    let updatedData = req.body;
+    const imageFile = req.files ? req.files.image : null;
 
     const existingExecutionOverview = await ExecutionOverview.findById(overviewId);
 
     if (!existingExecutionOverview) {
-        return res.status(404).json({
-            message: [{ key: 'error', value: 'ExecutionOverview not found' }]
-        });
+      return res.status(404).json({
+        message: [{ key: "error", value: "ExecutionOverview not found" }],
+      });
     }
 
+    // Ensure type and typeName are properly formatted as arrays
+    if (updatedData.type) {
+      updatedData.type = Array.isArray(updatedData.type) ? updatedData.type : JSON.parse(updatedData.type);
+    }
+    if (updatedData.typeName) {
+      updatedData.typeName = Array.isArray(updatedData.typeName) ? updatedData.typeName : JSON.parse(updatedData.typeName);
+    }
+
+    if (imageFile) {
+      const imagePathToDelete = path.join(
+        __dirname,
+        "../../uploads/services/executionoverview",
+        existingExecutionOverview.image
+      );
+
+      if (fs.existsSync(imagePathToDelete)) {
+        fs.unlink(imagePathToDelete, (err) => {
+          if (err) {
+            console.error("Error deleting image:", err);
+          }
+        });
+      }
+
+      const uniqueFileName = `${Date.now()}_${imageFile.name}`;
+      const uploadPath = path.join(
+        __dirname,
+        "../../uploads/services/executionoverview",
+        uniqueFileName
+      );
+      await imageFile.mv(uploadPath);
+      updatedData.image = uniqueFileName;
+    }
 
     const updatedExecutionOverview = await ExecutionOverview.findByIdAndUpdate(
-        overviewId,
-        updatedData,
+      overviewId,
+      updatedData,
+      { new: true } // This ensures the updated document is returned
     );
 
     if (!updatedExecutionOverview) {
-        return res.status(404).json({
-            message: [{ key: 'error', value: 'ExecutionOverview not found' }]
-        });
+      return res.status(404).json({
+        message: [{ key: "error", value: "ExecutionOverview not found" }],
+      });
     }
 
     return res.status(200).json({
-        message: [{ key: 'success', value: 'Execution Highlights updated successfully' }]        });
-} catch (error) {
+      message: [
+        { key: "success", value: "Execution Overview updated successfully" },
+      ],
+    });
+  } catch (error) {
     console.error(error);
     return res.status(500).json({
-        message: [{ key: 'error', value: 'Internal server error' }]
+      message: [{ key: "error", value: "Internal server error" }],
     });
-}
+  }
 };
-
-
 
 exports.deleteExecutionOverview = async (req, res) => {
   try {
@@ -142,8 +217,21 @@ exports.deleteExecutionOverview = async (req, res) => {
     if (!deletedExecutionOverview) {
       return res
         .status(404)
-        .json({ message: [{ key: 'error', value: 'Execution Overview not found' }] });
+        .json({
+          message: [{ key: "error", value: "Execution Overview not found" }],
+        });
     }
+    if (deletedExecutionOverview.image) {
+      const imagePath = path.join(
+        __dirname,
+        "../../uploads/services/executionoverview",
+        deletedExecutionOverview.image
+      );
+      if (fs.existsSync(imagePath) && fs.lstatSync(imagePath).isFile()) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
     return res.status(200).json({
       message: [
         { key: "success", value: "Execution Overview deleted successfully" },

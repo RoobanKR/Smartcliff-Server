@@ -6,13 +6,11 @@ exports.createServiceAbout = async (req, res) => {
     try {
       const { heading, subHeading, feature, business_service, service } = req.body;
   
-      // Check if service about already exists
       const existingAbout = await ServiceAbout.findOne({ heading, service });
       if (existingAbout) {
         return res.status(403).json({ message: [{ key: "error", value: "Service About already exists" }] });
       }
   
-      // Validate feature data
       let parsedFeatures = [];
       if (feature) {
         try {
@@ -22,11 +20,9 @@ exports.createServiceAbout = async (req, res) => {
         }
       }
   
-      // Handling feature icons correctly
       let formattedFeatures = parsedFeatures.map((f, index) => {
         let featureIcon = null;
         
-        // Ensure req.files is defined and contains the icon file
         if (req.files && req.files[`icon_${index}`]) {
           const iconFile = req.files[`icon_${index}`];
           featureIcon = `${Date.now()}_${iconFile.name}`;
@@ -43,7 +39,6 @@ exports.createServiceAbout = async (req, res) => {
         return { ...f, icon: featureIcon };
       });
   
-      // Handling multiple images upload
       let uploadedImages = [];
       if (req.files?.images) {
         const imageFiles = Array.isArray(req.files.images) ? req.files.images : [req.files.images];
@@ -58,7 +53,6 @@ exports.createServiceAbout = async (req, res) => {
         }
       }
   
-      // Create new Service About document
       const newServiceAbout = new ServiceAbout({
         heading,
         subHeading,
@@ -88,12 +82,10 @@ exports.createServiceAbout = async (req, res) => {
         const allAboutServices = abouts.map((about) => {
             const serviceAboutObj = about.toObject();
 
-            // Update images array with full URLs
             const imageUrls = serviceAboutObj.images.map(image => 
                 `${process.env.BACKEND_URL}/uploads/services/about/images/${image}`
             );
 
-            // Update feature icons with full URLs
             const updatedFeatures = serviceAboutObj.feature.map(feature => ({
                 ...feature,
                 icon: feature.icon 
@@ -103,7 +95,7 @@ exports.createServiceAbout = async (req, res) => {
 
             return {
                 ...serviceAboutObj,
-                images: imageUrls, // Store array of full image URLs
+                images: imageUrls,
                 feature: updatedFeatures,
             };
         });
@@ -126,15 +118,12 @@ exports.getAboutServiceById = async (req, res) => {
             return res.status(404).json({ message: [{ key: 'error', value: 'About not found' }] });
         }
 
-        // Convert the document to an object for modification
         const serviceAboutObj = about.toObject();
 
-        // Update images array with full URLs
         const imageUrls = serviceAboutObj.images.map(image => 
             `${process.env.BACKEND_URL}/uploads/services/about/images/${image}`
         );
 
-        // Update feature icons with full URLs
         const updatedFeatures = serviceAboutObj.feature.map(feature => ({
             ...feature,
             icon: feature.icon 
@@ -146,7 +135,7 @@ exports.getAboutServiceById = async (req, res) => {
             message: [{ key: 'success', value: 'Service About Retrieved successfully' }],
             serviceAboutById: {
                 ...serviceAboutObj,
-                images: imageUrls, // Store array of full image URLs
+                images: imageUrls,
                 feature: updatedFeatures,
             },
         });
@@ -163,13 +152,11 @@ exports.updateAboutService = async (req, res) => {
         const aboutServiceId = req.params.id;
         const { heading, subHeading, feature, business_service, service } = req.body;
 
-        // Check if Service About exists
         const existingAboutService = await ServiceAbout.findById(aboutServiceId);
         if (!existingAboutService) {
             return res.status(404).json({ message: [{ key: "error", value: "About service not found" }] });
         }
 
-        // Parse feature data
         let parsedFeatures = [];
         if (feature) {
             try {
@@ -179,16 +166,14 @@ exports.updateAboutService = async (req, res) => {
             }
         }
 
-        // Handle feature icons
         let formattedFeatures = parsedFeatures.map((f, index) => {
-            let featureIcon = f.icon; // Keep old icon if not updated
+            let featureIcon = f.icon; 
 
             if (req.files?.[`icon_${index}`]) {
                 const iconFile = req.files[`icon_${index}`];
                 featureIcon = `${Date.now()}_${iconFile.name}`;
                 const iconPath = path.join(__dirname, "../../uploads/services/about/icon", featureIcon);
 
-                // Delete old icon if exists
                 if (f.icon) {
                     const oldIconPath = path.join(__dirname, "../../uploads/services/about/icon", f.icon);
                     if (fs.existsSync(oldIconPath)) {
@@ -207,12 +192,10 @@ exports.updateAboutService = async (req, res) => {
             return { ...f, icon: featureIcon };
         });
 
-        // Handle multiple images update
-        let uploadedImages = existingAboutService.images; // Keep old images if not updated
+        let uploadedImages = existingAboutService.images;
         if (req.files?.images) {
             const imageFiles = Array.isArray(req.files.images) ? req.files.images : [req.files.images];
 
-            // Delete old images
             existingAboutService.images.forEach((oldImage) => {
                 const oldImagePath = path.join(__dirname, "../../uploads/services/about/images", oldImage);
                 if (fs.existsSync(oldImagePath)) {
@@ -220,7 +203,6 @@ exports.updateAboutService = async (req, res) => {
                 }
             });
 
-            // Upload new images
             uploadedImages = [];
             for (const imageFile of imageFiles) {
                 if (imageFile.size > 3 * 1024 * 1024) {
@@ -233,7 +215,6 @@ exports.updateAboutService = async (req, res) => {
             }
         }
 
-        // Update the document
         const updatedService = await ServiceAbout.findByIdAndUpdate(
             aboutServiceId,
             {
@@ -273,7 +254,6 @@ exports.deleteAboutServices = async (req, res) => {
             });
         }
 
-        // Delete main icon if exists
         if (about.icon) {
             const iconPath = path.join(__dirname, "../../uploads/services/about/icon", about.icon);
             if (fs.existsSync(iconPath)) {
@@ -281,7 +261,6 @@ exports.deleteAboutServices = async (req, res) => {
             }
         }
 
-        // Delete all images associated with the service
         if (about.images && about.images.length > 0) {
             about.images.forEach((image) => {
                 const imagePath = path.join(__dirname, "../../uploads/services/about/images", image);
@@ -291,7 +270,6 @@ exports.deleteAboutServices = async (req, res) => {
             });
         }
 
-        // Delete feature icons if they exist
         if (about.feature && about.feature.length > 0) {
             about.feature.forEach((feature) => {
                 if (feature.icon) {
@@ -303,7 +281,6 @@ exports.deleteAboutServices = async (req, res) => {
             });
         }
 
-        // Delete service about entry from database
         await ServiceAbout.findByIdAndDelete(id);
 
         return res.status(200).json({

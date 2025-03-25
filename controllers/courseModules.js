@@ -10,14 +10,12 @@ exports.createCourseModules = async (req, res) => {
       });
     }
 
-    // Check if modules array is empty
     if (!modules || modules.length === 0) {
       return res.status(400).json({
         message: [{ key: "error", value: "Modules array cannot be empty" }],
       });
     }
 
-    // Validate and save each module
     const newCourseModules = new CourseModules({
       modules,
       course,

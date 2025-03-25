@@ -13,7 +13,6 @@ module.exports.userAuth= (req, res, next) => {
 		req.token = bearerToken;
 	}
 	
-	console.log("cookies received", token)
   if (!token) {
     return res.status(500).json({ message: [{ key: 'error', value: 'User is not logged in' }] })
   }
@@ -21,22 +20,18 @@ module.exports.userAuth= (req, res, next) => {
   //FIXME: redirect to login page when status is failed
   jwt.verify(token, JWT_TOKEN_KEY, async (err, data) => {
     if (err) {
-	    console.log("error 1 at middleware") 
 	    console.log(err)
       res.clearCookie("token")
       return res.status(500).json({ message: [{ key: 'error', value: 'User is not logged in' }] })
     } else {
       const user = await User.findById(data.id)
       if (user){
-	      console.log("success in middleware");
-	console.log(user);
         req.user = user
         next();
       }
       
       else {
 	      console.log("error 2 at middleware")
-	      console.log(user)
         res.clearCookie("token")
         return res.status(500).json({ message: [{ key: 'error', value: 'User is not logged in' }] })
       }

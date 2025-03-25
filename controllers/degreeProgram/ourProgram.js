@@ -1,59 +1,34 @@
 const OurProgram = require("../../models/degreeprogram/OurProgramModal");
 const path = require("path");
 const fs = require('fs');
-const { createClient } = require('@supabase/supabase-js');
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabaseUrl = process.env.SUPABASE_URL;
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 exports.createOurProgram = async (req, res) => {
   try {
-      const { title, description, degree_program } = req.body;
+      const { title, description, service,business_service,college,degree_program } = req.body;
 
-      const existingOurProgram = await OurProgram.findOne({ title });
-      
-      if (existingOurProgram) {
-          return res.status(403).json({ message: [{ key: "error", value: "Our Program Name already exists" }] });
-      }
 
       if (!title || !description) {
           return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
       }
 
-      const iconFile = req.files?.icon;
-
-      if (!iconFile) {
-          return res.status(400).json({
-              message: [{ key: "error", value: "Our Program icon is required" }],
-          });
-      }
-
-      if (iconFile.size > 5 * 1024 * 1024) {
-          return res.status(400).json({
-              message: [{ key: "error", value: "Our Program icon size exceeds the 5MB limit" }],
-          });
-      }
-
-      const uniqueFileName = `${Date.now()}_${iconFile.name}`;
-
-      const { error: uploadError } = await supabase.storage
-          .from('SmartCliff/degreeProgram/our_program') // Ensure this is the correct bucket name/path
-          .upload(uniqueFileName, iconFile.data);
-
-      if (uploadError) {
-          console.error("Error uploading icon to Supabase:", uploadError);
-          return res.status(500).json({
-              message: [{ key: "error", value: "Error uploading icon to Supabase" }],
-          });
-      }
-
-      const iconUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/degreeProgram/our_program/${uniqueFileName}`;
-
+  const iconFile = req.files.icon;
+   
+           if (iconFile.size > 3 * 1024 * 1024) {
+               return res.status(400).json({
+                   message: [{ key: "error", value: "Image size exceeds the 3MB limit" }],
+               });
+           }
+   
+           const uniqueFileName = `${Date.now()}_${iconFile.name}`;
+           const uploadPath = path.join(__dirname, "../../uploads/degreeprogram/ourprogram", uniqueFileName);
+   
+           await iconFile.mv(uploadPath);
+   
       const newOurProgram = new OurProgram({
           title,
           description,
-          icon: iconUrl,
+          icon: uniqueFileName,
+          service,business_service,college,
           degree_program,
       });
 
@@ -70,13 +45,21 @@ exports.createOurProgram = async (req, res) => {
 
 exports.getAllOurProgram = async (req, res) => {
     try {
-      const ourPrograms = await OurProgram.find().populate("degree_program");
+      const ourPrograms = await OurProgram.find().populate("degree_program").populate('service').populate('business_service').populate('college');
   
-      
+      const allOutcomes = ourPrograms.map((out) => {
+        const outcomesObj = out.toObject();
+        return {
+            ...outcomesObj,
+            icon: process.env.BACKEND_URL + "/uploads/degreeprogram/ourprogram/" + outcomesObj.icon,
+        };
+    });
+
+
   
       return res.status(200).json({
         message: [{ key: 'success', value: 'Our Program Retrieved successfully' }],
-        our_Programs: ourPrograms,
+        our_Programs: allOutcomes,
       });
     } catch (error) {
       return res.status(500).json({ message: [{ key: 'error', value: 'Internal server error' }] });
@@ -86,13 +69,16 @@ exports.getAllOurProgram = async (req, res) => {
   exports.getOurProgramById = async (req, res) => {
     const { id } = req.params;
     try {
-      const ourPrograms = await OurProgram.findById(id).populate("degree_program");
+      const ourPrograms = await OurProgram.findById(id).populate("degree_program").populate('service').populate('business_service').populate('college');
       if (!ourPrograms) {
         return res.status(404).json({ message: [{ key: 'error', value: 'Our Program not found' }] });
       }
       return res.status(200).json({
         message: [{ key: 'success', value: 'Our Program Retrieved successfully' }],
-        our_ProgramsById: ourPrograms
+        our_ProgramsById: {
+          ...ourPrograms.toObject(),
+          icon: process.env.BACKEND_URL + '/uploads/degreeprogram/ourprogram/' + ourPrograms.icon,
+      },
       });
     } catch (error) {
       console.error(error);
@@ -117,58 +103,35 @@ exports.getAllOurProgram = async (req, res) => {
         });
       }
   
-      if (newIconFile) {
-        // If there's an existing icon, remove it from Supabase
-        if (ourProgram.icon) {
-          const existingIconParts = ourProgram.icon.split("/");
-          const existingIconName = existingIconParts[existingIconParts.length - 1];
-  
-          try {
-            const { error } = await supabase.storage
-            .from('SmartCliff')
-            .remove(`degreeProgram/our_program/${[existingIconName]}`);
-  
-            if (error) {
-              console.error("Error removing existing icon from Supabase storage:", error);
-              return res.status(500).json({
-                message: [{ key: "error", value: "Error removing existing icon from Supabase storage" }],
-              });
-            }
-          } catch (error) {
-            console.error("Error removing icon from Supabase storage:", error);
-            return res.status(500).json({
-              message: [{ key: "error", value: "Internal server error" }],
-            });
+    if (newIconFile) {
+      const imagePathToDelete = path.join(
+        __dirname,
+        "../../uploads/degreeprogram/ourprogram",
+        ourProgram.icon
+      );
+
+      // Delete the existing icon if it exists
+      if (fs.existsSync(imagePathToDelete)) {
+        fs.unlink(imagePathToDelete, (err) => {
+          if (err) {
+            console.error("Error deleting icon:", err);
           }
-        }
-  
-        // Upload the new icon to Supabase
-        const uniqueFileName = `${Date.now()}_${newIconFile.name}`;
-  
-        try {
-          const { data, error } = await supabase.storage
-            .from("SmartCliff/degreeProgram/our_program")
-            .upload(uniqueFileName, newIconFile.data);
-  
-          if (error) {
-            console.error("Error uploading new icon to Supabase storage:", error);
-            return res.status(500).json({
-              message: [{ key: "error", value: "Error uploading new icon to Supabase storage" }],
-            });
-          }
-  
-          const iconUrl = `${supabaseUrl}/storage/v1/object/public/SmartCliff/degreeProgram/our_program/${uniqueFileName}`;
-          ourProgram.icon = iconUrl;
-        } catch (error) {
-          console.error("Error uploading new icon to Supabase storage:", error);
-          return res.status(500).json({
-            message: [{ key: "error", value: "Internal server error" }],
-          });
-        }
+        });
       }
+
+      const uniqueFileName = `${Date.now()}_${newIconFile.name}`;
+      const uploadPath = path.join(__dirname, "../../uploads/degreeprogram/ourprogram", uniqueFileName);
+
+      await newIconFile.mv(uploadPath);
+      ourProgram.icon = uniqueFileName; 
+    }
   
       ourProgram.title = title;
       ourProgram.description = description;
+      ourProgram.service = service;
+      ourProgram.business_service = business_service;
+      ourProgram.college = college;
+
       ourProgram.degree_program = degree_program;
   
       await ourProgram.save();
@@ -197,22 +160,12 @@ exports.getAllOurProgram = async (req, res) => {
       }
   
       // If there's an icon, remove it from Supabase
-      if (ourProgram.icon) {
-        const iconUrlParts = ourProgram.icon.split('/');
-        const iconFileName = iconUrlParts[iconUrlParts.length - 1];
-  
-        try {
-          const { data, error } = await supabase.storage
-          .from('SmartCliff')
-          .remove(`degreeProgram/our_program/${[iconFileName]}`);
-  
-        } catch (error) {
-          console.error("Error deleting icon from Supabase:", error);
-          return res.status(500).json({
-            message: [{ key: 'error', value: 'Internal server error' }],
-          });
-        }
-      }
+             if (ourProgram.icon) {
+                       const imagePath = path.join(__dirname, "../../uploads/degreeprogram/ourprogram", ourProgram.icon);
+                       if (fs.existsSync(imagePath) && fs.lstatSync(imagePath).isFile()) {
+                           fs.unlinkSync(imagePath);
+                       }
+                   }
   
       await OurProgram.findByIdAndDelete(id);
   

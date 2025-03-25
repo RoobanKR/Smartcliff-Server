@@ -18,7 +18,6 @@ exports.createServiceProcess = async (req, res) => {
       let formattedFeatures = parsedProcess.map((f, index) => {
         let processIcon = null;
         
-        // Ensure req.files is defined and contains the icon file
         if (req.files && req.files[`icon_${index}`]) {
           const iconFile = req.files[`icon_${index}`];
           processIcon = `${Date.now()}_${iconFile.name}`;
@@ -60,7 +59,6 @@ exports.createServiceProcess = async (req, res) => {
         const allAboutServices = allProcess.map((service) => {
             const serviceObj = service.toObject();
 
-            // Ensure process icons have full URLs
             serviceObj.process = serviceObj.process.map(proc => ({
                 ...proc,
                 icon: proc.icon 
@@ -86,14 +84,12 @@ exports.getServiceProcessById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Find the service process by ID and populate business_service
         const serviceProcess = await ServiceProcess.findById(id).populate('business_service');
 
         if (!serviceProcess) {
             return res.status(404).json({ message: [{ key: 'error', value: 'Service Process not found' }] });
         }
 
-        // Convert to object and modify process icons
         const serviceObj = serviceProcess.toObject();
         serviceObj.process = serviceObj.process.map(proc => ({
             ...proc,
@@ -120,13 +116,11 @@ exports.updateProcessService = async (req, res) => {
         const processServiceId = req.params.id;
         const {process, business_service, service } = req.body;
 
-        // Check if Service About exists
         const existingAboutService = await ServiceProcess.findById(processServiceId);
         if (!existingAboutService) {
             return res.status(404).json({ message: [{ key: "error", value: "Process service not found" }] });
         }
 
-        // Parse process data
         let parsedProcess = [];
         if (process) {
             try {
@@ -136,16 +130,14 @@ exports.updateProcessService = async (req, res) => {
             }
         }
 
-        // Handle process icons
         let formattedFeatures = parsedProcess.map((f, index) => {
-            let featureIcon = f.icon; // Keep old icon if not updated
+            let featureIcon = f.icon; 
 
             if (req.files?.[`icon_${index}`]) {
                 const iconFile = req.files[`icon_${index}`];
                 featureIcon = `${Date.now()}_${iconFile.name}`;
                 const iconPath = path.join(__dirname, "../../uploads/services/process/icon", featureIcon);
 
-                // Delete old icon if exists
                 if (f.icon) {
                     const oldIconPath = path.join(__dirname, "../../uploads/services/process/icon", f.icon);
                     if (fs.existsSync(oldIconPath)) {
@@ -164,7 +156,6 @@ exports.updateProcessService = async (req, res) => {
             return { ...f, icon: featureIcon };
         });
 
-        // Update the document
         const updatedService = await ServiceProcess.findByIdAndUpdate(
             processServiceId,
             {
@@ -201,7 +192,6 @@ exports.deleteprocessServices = async (req, res) => {
         }
 
 
-        // Delete process icons if they exist
         if (Proces.process && Proces.process.length > 0) {
             Proces.process.forEach((process) => {
                 if (process.icon) {
@@ -213,7 +203,6 @@ exports.deleteprocessServices = async (req, res) => {
             });
         }
 
-        // Delete service Proces entry from database
         await ServiceProcess.findByIdAndDelete(id);
 
         return res.status(200).json({

@@ -2,52 +2,54 @@ const Faq = require("../models/faqModal");
  
 exports.createFaq = async (req, res) => {
   try {
-    const { faqItems, course, category, degree_program,service, business_service } = req.body;
- 
+    const { faqItems, course, category, degree_program, service, business_service } = req.body;
+
     if (!faqItems || !Array.isArray(faqItems) || faqItems.length === 0) {
       return res
         .status(400)
         .json({ message: [{ key: "error", value: "FAQ items are required" }] });
     }
- 
+
     // Validate each FAQ item
-    const isValidFaqItems = faqItems.every((item) => {
-      return item.question && item.answer;
-    });
- 
+    const isValidFaqItems = faqItems.every((item) => item.question && item.answer);
+
     if (!isValidFaqItems) {
       return res
         .status(400)
         .json({ message: [{ key: "error", value: "Invalid FAQ items" }] });
     }
- 
-    // Create a FaqGroup object
+
+    // Determine category_name based on provided values
+    const category_name = course || degree_program || business_service || service ? "non-common" : "common";
+
+    // Create a Faq object
     const newFaq = new Faq({
       faqItems,
-      course,
-      category_name: category ? "non-common" : "common",
-      degree_program,
-      service,
-      business_service
+      course: course || null,
+      degree_program: degree_program || null,
+      service: service || null,
+      business_service: business_service || null,
+      category_name,
     });
- 
-    // Save the FaqGroup object
+
+    // Save the Faq object
     await newFaq.save();
- 
+
     return res.status(201).json({
       message: [{ key: "Success", value: "FAQs Added Successfully" }],
     });
   } catch (error) {
     console.error(error);
-    return res
-      .status(500)
-      .json({ message: [{ key: "error", value: "Internal server error" }] });
+    return res.status(500).json({
+      message: [{ key: "error", value: "Internal server error" }],
+    });
   }
 };
+
  
 exports.getAllFaq = async (req, res) => {
   try {
-    const allFaq = await Faq.find().populate("course");
+    const allFaq = await Faq.find().populate("course").populate('business_service').populate('service');
     res.status(200).json({
       message: [{ key: "success", value: "FAQ section get All data" }],
       FAQ: allFaq,
@@ -63,7 +65,7 @@ exports.getFaqById = async (req, res) => {
   const { id } = req.params;
  
   try {
-    const FAQ = await Faq.findById(id);
+    const FAQ = await Faq.findById(id).populate('business_service').populate('service').populate("course");
     if (!FAQ) {
       return res
         .status(404)

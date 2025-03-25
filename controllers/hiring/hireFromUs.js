@@ -7,6 +7,10 @@ exports.createHireFromUs = async (req, res) => {
   try {
     const { name, designation, company_name, mobile, email, enquiry,count,course } =
       req.body;
+      const existingHireFormUs = await HireFromUs.findOne(email);
+      if (existingHireFormUs) {
+        return res.status(403).json({ message: [{ key: "error", value: "Email exists" }] });
+      }
 
     if (
       !name ||

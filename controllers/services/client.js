@@ -55,7 +55,7 @@ exports.createServiceClient = async (req, res) => {
         const serviceObj = clientss.toObject();
         return {
             ...serviceObj,
-            image: process.env.BACKEND_URL + "/uploads/services/client/" + serviceObj.image, // Append image URL
+            image: process.env.BACKEND_URL + "/uploads/services/client/" + serviceObj.image,
         };
     });
   
@@ -75,19 +75,17 @@ exports.getServiceClientById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Find the service process by ID and populate business_service
         const serviceProcess = await ServiceClient.findById(id).populate('business_service').populate('service');
 
         if (!serviceProcess) {
             return res.status(404).json({ message: [{ key: 'error', value: 'Service Clinet not found' }] });
         }
 
-        // Convert to object and modify process icons
         return res.status(200).json({
             message: [{ key: 'success', value: 'Service client Id based Retrieved successfully' }],
             service_client: {
               ...serviceProcess.toObject(),
-              image: process.env.BACKEND_URL + '/uploads/services/client/' + serviceProcess.image, // Append image URL
+              image: process.env.BACKEND_URL + '/uploads/services/client/' + serviceProcess.image,
           },
           });
 
@@ -188,7 +186,6 @@ exports.deleteclientServices = async (req, res) => {
                    }
            
 
-        // Delete service Proces entry from database
         await ServiceClient.findByIdAndDelete(id);
 
         return res.status(200).json({

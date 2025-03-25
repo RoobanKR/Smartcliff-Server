@@ -64,7 +64,6 @@ exports.getAdmissionById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Fetchadmission by ID from the database
     const admission = await Admission.findById(id).populate("degree_program");
 
     if (!admission) {
@@ -114,7 +113,6 @@ exports.updateAdmission = async (req, res) => {
       });
     }
 
-    // Update theadmission by ID
     const updatedAdmission = await Admission.findByIdAndUpdate(id, {
       admission: admissionObjects,
       degree_program,   
@@ -142,7 +140,6 @@ exports.deleteAdmission = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Delete theadmission by ID
     const deletedAdmission = await Admission.findByIdAndDelete(id);
 
     if (!deletedAdmission) {

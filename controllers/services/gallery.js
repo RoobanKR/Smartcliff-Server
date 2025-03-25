@@ -103,7 +103,6 @@ exports.getAllGallery = async (req, res) => {
             });
         }
 
-        // Check if the name is being updated and if it already exists in the database
         if (updatedData.name && updatedData.name !== existingGallery.name) {
             const nameExists = await Gallery.exists({ name: updatedData.name });
             if (nameExists) {

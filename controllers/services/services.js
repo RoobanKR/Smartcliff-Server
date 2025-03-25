@@ -50,13 +50,13 @@ exports.createServices = async (req, res) => {
 
 exports.getAllService = async (req, res) => {
     try {
-        const services = await Service.find().populate("business_services"); // ✅ Correct field name
+        const services = await Service.find().populate("business_services"); 
 
         const allServices = services.map((service) => {
             const serviceObj = service.toObject();
             return {
                 ...serviceObj,
-                icon: process.env.BACKEND_URL + "/uploads/services/service/icon/" + serviceObj.icon, // Append icon URL
+                icon: process.env.BACKEND_URL + "/uploads/services/service/icon/" + serviceObj.icon, 
             };
         });
 
@@ -64,7 +64,7 @@ exports.getAllService = async (req, res) => {
             message: [{ key: "success", value: "Service Retrieved successfully" }],
             get_all_services: allServices,
         });
-    } catch (error) {
+    } catch (error) {   
         console.error(error);
         return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
     }
@@ -82,7 +82,7 @@ exports.getServiceById = async (req, res) => {
             message: [{ key: 'success', value: 'Service Id based Retrieved successfully' }],
             serviceById: {
                 ...service.toObject(),
-                icon: process.env.BACKEND_URL + '/uploads/services/service/icon/' + service.icon, // Append icon URL
+                icon: process.env.BACKEND_URL + '/uploads/services/service/icon/' + service.icon, 
             },
         });
     } catch (error) {

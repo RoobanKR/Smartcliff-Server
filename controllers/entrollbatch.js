@@ -2,7 +2,6 @@ const EntrollBatch = require("../models/BatchEntrollModal");
 const otpGenerator = require("otp-generator");
 const emailUtil = require("../utils/sendEmail");
 
-// Temporary storage for OTPs
 const otpStorage = {};
 const formStorage = {};
 
@@ -21,13 +20,11 @@ exports.createEntrollBatch = async (req, res) => {
       reference,
     } = req.body;
 
-    // Generate OTP
     const otp = otpGenerator.generate(6, {
       upperCase: false,
       specialChars: false,
     });
 
-    // Save form data and OTP to storage
     const formData = {
       name,
       email,
@@ -43,7 +40,6 @@ exports.createEntrollBatch = async (req, res) => {
     formStorage[email] = formData;
     otpStorage[email] = otp;
 
-    // Send OTP via email
     const emailSubject = "Your OTP for Verification";
     const emailBody = `
     <p><strong>Welcome to SmartCliff</strong></p>
@@ -73,7 +69,6 @@ exports.batchVerifyOTP = async (req, res) => {
   try {
     const { otp, email } = req.body;
 
-    // Check if OTP exists in storage
     const storedOTP = otpStorage[email];
     if (!storedOTP) {
       return res.status(400).json({
@@ -81,21 +76,17 @@ exports.batchVerifyOTP = async (req, res) => {
       });
     }
 
-    // Validate OTP
     if (otp !== storedOTP) {
       return res
         .status(400)
         .json({ message: [{ key: "error", value: "Invalid OTP" }] });
     }
 
-    // Get form data from storage
     const formData = formStorage[email];
 
-    // Save student data to MongoDB
     const newEntrollBatch = new EntrollBatch(formData);
     await newEntrollBatch.save();
 
-    // Clear form data and OTP from storage after successful verification and saving
     delete formStorage[email];
     delete otpStorage[email];
 
@@ -115,7 +106,6 @@ exports.batchResendOTP = async (req, res) => {
   try {
     const { email } = req.body;
 
-    // Check if email exists in form storage
     const formData = formStorage[email];
     if (!formData) {
       return res.status(400).json({
@@ -123,16 +113,13 @@ exports.batchResendOTP = async (req, res) => {
       });
     }
 
-    // Generate new OTP
     const newOTP = otpGenerator.generate(6, {
       upperCase: false,
       specialChars: false,
     });
 
-    // Update OTP in OTP storage
     otpStorage[email] = newOTP;
 
-    // Send new OTP via email
     const emailSubject = "Your New OTP for Verification";
     const emailBody = `
       <p><strong>Welcome back to SmartCliff</strong></p>

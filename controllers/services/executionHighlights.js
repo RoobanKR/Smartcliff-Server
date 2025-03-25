@@ -6,7 +6,6 @@ exports.createExecutionHighlights = async (req, res) => {
   try {
     const { stack, count, service, business_service } = req.body;
 
-    // Validate required fields
     if (!stack || !count) {
       return res.status(400).json({
         message: [{ key: "error", value: "Required fields: stack and count are missing" }],
@@ -64,7 +63,7 @@ exports.getAllExecutionHighlights = async (req, res) => {
         const serviceObj = executionHighlights.toObject();
         return {
             ...serviceObj,
-            image: process.env.BACKEND_URL + "/uploads/services/highlights/" + serviceObj.image, // Append image URL
+            image: process.env.BACKEND_URL + "/uploads/services/highlights/" + serviceObj.image,
         };
     });
   
@@ -90,7 +89,7 @@ exports.getAllExecutionHighlights = async (req, res) => {
         message: [{ key: 'success', value: 'Execution Highlights Id based Retrieved successfully' }],
         serviceById: {
           ...executionHighlight.toObject(),
-          image: process.env.BACKEND_URL + '/uploads/services/highlights/' + executionHighlight.image, // Append image URL
+          image: process.env.BACKEND_URL + '/uploads/services/highlights/' + executionHighlight.image,
       },
       });
     } catch (error) {
@@ -115,7 +114,6 @@ exports.getAllExecutionHighlights = async (req, res) => {
             });
         }
 
-        // Check if the name is being updated and if it already exists in the database
         if (updatedData.stack && updatedData.stack !== existingExecutionHighlights.stack) {
             const stackExists = await ExecutionHighlights.exists({ stack: updatedData.stack });
             if (stackExists) {
