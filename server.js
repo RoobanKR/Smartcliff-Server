@@ -98,7 +98,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "http://smartcliff.academy",
+      "http://smartcliff.academy/",
       "http://localhost:3535",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
