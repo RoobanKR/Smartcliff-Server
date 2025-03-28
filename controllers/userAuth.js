@@ -11,12 +11,13 @@ const otpGenerator = require("otp-generator");
 const nodemailer = require("nodemailer");
 const CLIENT_URL = config.get("CLIENT_URL");
 const path = require("path");
-const fs = require('fs');
+const fs = require("fs");
 
 // For user sign up
 module.exports.SignUp = async (req, res) => {
   try {
-    const { email, username, phone,  password, gender } = req.body;
+    const { email, firstName, lastName, phone, password, role, gender, dob } =
+      req.body;
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
@@ -24,15 +25,40 @@ module.exports.SignUp = async (req, res) => {
         .status(403)
         .json({ message: [{ key: "error", value: "User already exists" }] });
     }
+    if (!req.files || !req.files.profile_pic) {
+      return res.status(400).json({
+        message: [{ key: "error", value: "Image is required" }],
+      });
+    }
 
-    
+    const profileFile = req.files.profile_pic;
+
+    if (profileFile.size > 3 * 1024 * 1024) {
+      return res.status(400).json({
+        message: [{ key: "error", value: "Image size exceeds the 3MB limit" }],
+      });
+    }
+
+    const uniqueFileName = `${Date.now()}_${profileFile.name}`;
+    const uploadPath = path.join(
+      __dirname,
+      "../uploads/user/profile",
+      uniqueFileName
+    );
+
+    await profileFile.mv(uploadPath);
+
 
     const user = await User.create({
       email,
-      username,
+      firstName,
+      lastName,
       phone,
       password,
+      role,
       gender,
+      dob,
+      profile_pic: uniqueFileName,
     });
 
     // FIXME: Remove user password before sending response
@@ -97,18 +123,18 @@ module.exports.SignIn = async (req, res) => {
     const token = createSecretToken(user._id);
 
     //res.cookie("token", token, {
-//	    withCredentials:true, 
-  //    httpOnly: false,
-//	    secure: true,
-//	    sameSite:"none",
-  //  });
+    //	    withCredentials:true,
+    //    httpOnly: false,
+    //	    secure: true,
+    //	    sameSite:"none",
+    //  });
 
     return res.status(201).json({
       message: [
         { key: "success", value: ` ${user.role} logged in successfully` },
       ],
       user: sanitizedUser,
-	    token:token,
+      token: token,
     });
   } catch (error) {
     console.error(error);
@@ -151,7 +177,7 @@ module.exports.updateUser = async (req, res) => {
 
       if (profilePicFile.size > 3 * 1024 * 1024) {
         return res.status(400).json({
-          message: "Profile picture size exceeds the 3MB limit"
+          message: "Profile picture size exceeds the 3MB limit",
         });
       }
 
@@ -159,7 +185,11 @@ module.exports.updateUser = async (req, res) => {
       if (existingUser.profile_pic) {
         try {
           // Construct the path to the old profile picture file
-          const oldProfilePicPath = path.join(__dirname, "../uploads/users", existingUser.profile_pic);
+          const oldProfilePicPath = path.join(
+            __dirname,
+            "../uploads/users",
+            existingUser.profile_pic
+          );
           // Delete the old profile picture file
           await fs.unlink(oldProfilePicPath);
         } catch (error) {
@@ -183,7 +213,7 @@ module.exports.updateUser = async (req, res) => {
       } catch (err) {
         console.error("Error moving the profile picture file:", err);
         return res.status(500).json({
-          message: "Internal server error"
+          message: "Internal server error",
         });
       }
     }
@@ -227,7 +257,9 @@ exports.getUsers = async (req, res) => {
     });
   } catch (error) {
     console.log("Error fetching users:", error);
-    res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
+    res
+      .status(500)
+      .json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };
 
@@ -369,13 +401,11 @@ module.exports.ForgotPasswordResetPassword = async (req, res) => {
         .send({ message: [{ key: "error", value: "Invalid link" }] });
     }
 
-
     user.password = password;
     await user.save();
     res.status(200).json({
       message: [{ key: "success", value: "Password reset successfully" }],
     });
-  
   } catch (error) {
     console.log(error);
     return res
@@ -383,7 +413,6 @@ module.exports.ForgotPasswordResetPassword = async (req, res) => {
       .json({ message: [{ key: "error", value: "Internal Server Error" }] });
   }
 };
-
 
 const transporter = nodemailer.createTransport({
   service: "Gmail",
@@ -475,29 +504,37 @@ module.exports.ResetPasswordSendOTP = async (req, res) => {
 // For verifying otp for reset password
 module.exports.ResetPasswordVerifyOTP = async (req, res) => {
   try {
+    let userId = req.user._id;
+    let subject = "RESET_PASSWORD";
+    let otp = req.body.otp;
 
-    let userId = req.user._id
-    let subject = 'RESET_PASSWORD'
-    let otp = req.body.otp
-
-    const response = await Otp.find({ userId, subject }).sort({ createdAt: -1 }).limit(1);
-    const isOTPCorrect = await bcrypt.compare(otp, response[0].otp)
+    const response = await Otp.find({ userId, subject })
+      .sort({ createdAt: -1 })
+      .limit(1);
+    const isOTPCorrect = await bcrypt.compare(otp, response[0].otp);
 
     //FIXME: OTP EXPIRED MSG
-    if (response.length === 0 || !isOTPCorrect || new Date().getTime() > new Date(response[0].expirationTime).getTime()) {
-      return res.status(400).json({ message: [{ key: 'error', value: 'Wrong OTP' }] })
+    if (
+      response.length === 0 ||
+      !isOTPCorrect ||
+      new Date().getTime() > new Date(response[0].expirationTime).getTime()
+    ) {
+      return res
+        .status(400)
+        .json({ message: [{ key: "error", value: "Wrong OTP" }] });
     }
 
     await Otp.deleteOne({ userId, subject });
-    return res.status(200).json({ message: [{ key: 'success', value: 'OTP verified' }] })
-
+    return res
+      .status(200)
+      .json({ message: [{ key: "success", value: "OTP verified" }] });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res
       .status(500)
-      .json({ message: [{ key: 'error', value: 'Wrong OTP' }] })
+      .json({ message: [{ key: "error", value: "Wrong OTP" }] });
   }
-}
+};
 // For resetting password
 module.exports.ResetPassword = async (req, res) => {
   try {
@@ -528,21 +565,33 @@ module.exports.userVerify = async (req, res) => {
       address: req.user.address,
       role: req.user.role,
     };
-   return res.status(200).json({
+    return res.status(200).json({
       user: sanitizedUser,
     });
   } catch (error) {
     console.log(error);
     return res
       .status(500)
-      .json({ message: [{ key: "error", value: "Internal Server Error", detail:error }] });
+      .json({
+        message: [
+          { key: "error", value: "Internal Server Error", detail: error },
+        ],
+      });
   }
 };
 
-
 module.exports.registerAdmin = async (req, res) => {
   try {
-    const { email, firstName, lastName, phone, address, password, gender, dob } = req.body;
+    const {
+      email,
+      firstName,
+      lastName,
+      phone,
+      password,
+      gender,
+      dob,
+      role
+    } = req.body;
     const existingAdmin = await User.findOne({ email });
 
     if (existingAdmin) {
@@ -552,47 +601,33 @@ module.exports.registerAdmin = async (req, res) => {
     }
 
     // Assuming you're also receiving a profile picture file in the request
-    const profilePicFile = req.files.profile_pic;
+    const profileFile = req.files.profile_pic;
 
-    if (!profilePicFile) {
+    if (profileFile.size > 3 * 1024 * 1024) {
       return res.status(400).json({
-        message: [{ key: "error", value: "Profile picture is required" }],
+        message: [{ key: "error", value: "Image size exceeds the 3MB limit" }],
       });
     }
 
-    if (profilePicFile.size > 3 * 1024 * 1024) {
-      return res.status(400).json({
-        message: [{ key: "error", value: "Profile picture size exceeds the 3MB limit" }],
-      });
-    }
-
-    const uniqueFileName = `${Date.now()}_${profilePicFile.name}`;
+    const uniqueFileName = `${Date.now()}_${profileFile.name}`;
     const uploadPath = path.join(
       __dirname,
-      "../uploads/admin",
+      "../uploads/user/profile",
       uniqueFileName
     );
 
-    try {
-      await profilePicFile.mv(uploadPath);
-    } catch (err) {
-      console.error("Error moving the profile picture file:", err);
-      return res.status(500).json({
-        message: [{ key: "error", value: "Internal server error" }],
-      });
-    }
+    await profileFile.mv(uploadPath);
 
     const admin = await User.create({
       email,
       firstName,
       lastName,
       phone,
-      address,
       password,
       gender,
       dob,
-      role: "admin",
-      profile_pic: uniqueFileName
+      role,
+      profile_pic: uniqueFileName,
     });
 
     // Generate a token for the new admin
@@ -613,7 +648,7 @@ module.exports.registerAdmin = async (req, res) => {
     if (emailSent) {
       res.status(201).json({
         message: [{ key: "success", value: "Admin registered successfully" }],
-        token: token // Include the token in the response
+        token: token, // Include the token in the response
       });
     } else {
       res.status(500).json({
@@ -650,14 +685,21 @@ module.exports.updateAdmin = async (req, res) => {
 
       if (profilePicFile.size > 3 * 1024 * 1024) {
         return res.status(400).json({
-          message: [{ key: "error", value: "Profile picture size exceeds the 3MB limit" }],
+          message: [
+            {
+              key: "error",
+              value: "Profile picture size exceeds the 3MB limit",
+            },
+          ],
         });
       }
 
       // Remove existing profile picture
       if (existingAdmin.profile_pic) {
         try {
-          fs.unlinkSync(path.join(__dirname, "../uploads/admin", existingAdmin.profile_pic));
+          fs.unlinkSync(
+            path.join(__dirname, "../uploads/admin", existingAdmin.profile_pic)
+          );
         } catch (err) {
           console.error("Error removing existing profile picture file:", err);
         }
@@ -684,8 +726,8 @@ module.exports.updateAdmin = async (req, res) => {
 
     // Update admin details
     const updatedAdmin = await User.findByIdAndUpdate(adminId, updates, {
-      new: true, 
-      runValidators: true, 
+      new: true,
+      runValidators: true,
     });
 
     // Remove sensitive data from the updated admin object
@@ -731,16 +773,26 @@ module.exports.deleteAdminById = async (req, res) => {
   }
 };
 
-
 module.exports.createSuperAdmin = async (req, res) => {
   try {
-    const { email, firstName, lastName, phone, address, password, gender, dob } = req.body;
+    const {
+      email,
+      firstName,
+      lastName,
+      phone,
+      address,
+      password,
+      gender,
+      dob,
+    } = req.body;
     const existingSuperAdmin = await User.findOne({ email });
 
     if (existingSuperAdmin) {
       return res
         .status(403)
-        .json({ message: [{ key: "error", value: "Super Admin already exists" }] });
+        .json({
+          message: [{ key: "error", value: "Super Admin already exists" }],
+        });
     }
 
     // Assuming you're also receiving a profile picture file in the request
@@ -754,7 +806,9 @@ module.exports.createSuperAdmin = async (req, res) => {
 
     if (profilePicFile.size > 3 * 1024 * 1024) {
       return res.status(400).json({
-        message: [{ key: "error", value: "Profile picture size exceeds the 3MB limit" }],
+        message: [
+          { key: "error", value: "Profile picture size exceeds the 3MB limit" },
+        ],
       });
     }
 
@@ -784,7 +838,7 @@ module.exports.createSuperAdmin = async (req, res) => {
       gender,
       dob,
       role: "super_admin",
-      profile_pic: uniqueFileName
+      profile_pic: uniqueFileName,
     });
 
     // Generate a token for the new admin
@@ -804,8 +858,10 @@ module.exports.createSuperAdmin = async (req, res) => {
 
     if (emailSent) {
       res.status(201).json({
-        message: [{ key: "success", value: "Super Admin registered successfully" }],
-        token: token // Include the token in the response
+        message: [
+          { key: "success", value: "Super Admin registered successfully" },
+        ],
+        token: token, // Include the token in the response
       });
     } else {
       res.status(500).json({
@@ -842,14 +898,25 @@ module.exports.updateSuperAdmin = async (req, res) => {
 
       if (profilePicFile.size > 3 * 1024 * 1024) {
         return res.status(400).json({
-          message: [{ key: "error", value: "Profile picture size exceeds the 3MB limit" }],
+          message: [
+            {
+              key: "error",
+              value: "Profile picture size exceeds the 3MB limit",
+            },
+          ],
         });
       }
 
       // Remove existing profile picture if present
       if (existingSuperAdmin.profile_pic) {
         try {
-          fs.unlinkSync(path.join(__dirname, "../uploads/super_admin", existingSuperAdmin.profile_pic));
+          fs.unlinkSync(
+            path.join(
+              __dirname,
+              "../uploads/super_admin",
+              existingSuperAdmin.profile_pic
+            )
+          );
         } catch (err) {
           console.error("Error removing existing profile picture file:", err);
         }
@@ -875,10 +942,14 @@ module.exports.updateSuperAdmin = async (req, res) => {
     }
 
     // Update admin details
-    const updatedSuperAdmin = await User.findByIdAndUpdate(superAdminId, updates, {
-      new: true, 
-      runValidators: true, 
-    });
+    const updatedSuperAdmin = await User.findByIdAndUpdate(
+      superAdminId,
+      updates,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     // Remove sensitive data from the updated admin object
     delete updatedSuperAdmin.password;
@@ -899,7 +970,6 @@ module.exports.updateSuperAdmin = async (req, res) => {
     console.error(error);
   }
 };
-
 
 module.exports.deleteSuperAdmin = async (req, res) => {
   try {
@@ -925,8 +995,3 @@ module.exports.deleteSuperAdmin = async (req, res) => {
     });
   }
 };
-
-
-
-
-

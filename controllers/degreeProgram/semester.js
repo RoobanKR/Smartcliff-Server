@@ -83,6 +83,7 @@ exports.updateSemester = async (req, res) => {
         submain,
         inner_heading,
         inner_subheading,
+        inner_url,
         icon,
       } = item;
 
@@ -97,6 +98,7 @@ exports.updateSemester = async (req, res) => {
         submain,
         inner_heading,
         inner_subheading,
+        inner_url,
         icon,
       });
     }

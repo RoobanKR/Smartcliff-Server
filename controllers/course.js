@@ -10,10 +10,8 @@ exports.createCourse = async (req, res) => {
       short_description,
       category,
       objective,
-      cost,
       duration,
       mode_of_training,
-      certificate,
       number_of_assessments,
       projects,
     } = req.body;
@@ -93,9 +91,6 @@ exports.createCourse = async (req, res) => {
           tool_software: Array.isArray(level.tool_software)
             ? level.tool_software
             : [level.tool_software],
-          instructor: Array.isArray(level.instructor)
-            ? level.instructor
-            : [level.instructor],
           lessons: Array.isArray(level.lessons)
             ? level.lessons.map((lesson) => ({
                 title: lesson.title,
@@ -116,10 +111,8 @@ exports.createCourse = async (req, res) => {
       category,
       image: uniqueFileName,
       objective,
-      cost,
       duration,
       mode_of_training,
-      certificate,
       number_of_assessments,
       projects,
       course_level: formattedLevels,
@@ -223,7 +216,6 @@ exports.getCourseById = async (req, res) => {
           });
         }
 
-        // Modify instructor profile image URL
       });
     }
 
@@ -251,10 +243,8 @@ exports.updateCourseById = async (req, res) => {
       slug,
       category,
       objective,
-      cost,
       duration,
       mode_of_training,
-      certificate,
       number_of_assessments,
       projects,
     } = req.body;
@@ -304,9 +294,6 @@ exports.updateCourseById = async (req, res) => {
           tool_software: Array.isArray(level.tool_software)
             ? level.tool_software
             : [level.tool_software],
-          instructor: Array.isArray(level.instructor)
-            ? level.instructor
-            : [level.instructor],
           lessons: Array.isArray(level.lessons)
             ? level.lessons.map((lesson) => ({
                 title: lesson.title,
@@ -324,10 +311,8 @@ exports.updateCourseById = async (req, res) => {
     course.short_description = short_description;
     course.category = category;
     course.objective = objective;
-    course.cost = cost;
     course.duration = duration;
     course.mode_of_training = mode_of_training;
-    course.certificate = certificate;
     course.number_of_assessments = number_of_assessments;
     course.projects = projects;
     course.course_level = formattedLevels;

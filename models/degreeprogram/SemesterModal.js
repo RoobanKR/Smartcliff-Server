@@ -4,6 +4,8 @@ const innerSchema = new mongoose.Schema({
   
 inner_heading: { type: String},
 inner_subheading: { type: String},
+inner_url: { type: String},
+
 });
 
 const semSchema = new mongoose.Schema({
@@ -22,9 +24,9 @@ const semesterSchema = new mongoose.Schema({
         type: [semSchema],
         required: true
       }, 
-    service: { type: mongoose.Schema.Types.ObjectId, ref: "Services",required: true},
-    business_service: { type: mongoose.Schema.Types.ObjectId, ref: 'business_service', required: true }, 
-    degree_program: { type: mongoose.Schema.Types.ObjectId, ref: "Degree_Program",required: true},
+    service: { type: mongoose.Schema.Types.ObjectId, ref: "Services"},
+    business_service: { type: mongoose.Schema.Types.ObjectId, ref: 'business_service' }, 
+    degree_program: { type: mongoose.Schema.Types.ObjectId, ref: "Degree_Program"},
     college: { type: mongoose.Schema.Types.ObjectId, ref: "College",default:null},
 
 //   lastModifiedBy: { type: String, required: true },

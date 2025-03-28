@@ -2,7 +2,7 @@ const Faq = require("../models/faqModal");
  
 exports.createFaq = async (req, res) => {
   try {
-    const { faqItems, course, category, degree_program, service, business_service } = req.body;
+    const { faqItems,type, course, college, degree_program, service, business_service } = req.body;
 
     if (!faqItems || !Array.isArray(faqItems) || faqItems.length === 0) {
       return res
@@ -20,12 +20,14 @@ exports.createFaq = async (req, res) => {
     }
 
     // Determine category_name based on provided values
-    const category_name = course || degree_program || business_service || service ? "non-common" : "common";
+    const category_name = type || course || degree_program || college|| business_service || service ? "non-common" : "common";
 
     // Create a Faq object
     const newFaq = new Faq({
       faqItems,
+      type: type || null,
       course: course || null,
+      college: college || null,
       degree_program: degree_program || null,
       service: service || null,
       business_service: business_service || null,

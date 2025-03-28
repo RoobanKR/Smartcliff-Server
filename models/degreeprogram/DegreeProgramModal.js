@@ -4,8 +4,8 @@ const DegreeProgramSchema = new mongoose.Schema({
   program_name: { type: String, required: true },
   slogan: { type: String, required: true },
   title: { type: String, required: true },
-  description: { type: String, required: true },
-  location: { type: String, required: true },
+  description: { type: String },
+  year: { type: Number },
 
   images: [{type: String,required:true,max: 5 * 1024 * 1024}],
   slug: { type: String, required: true },

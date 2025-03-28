@@ -1,12 +1,14 @@
 const mongoose = require("mongoose");
 
+
+const serviceSchema = new mongoose.Schema({
+  service: { type: String, required: true },
+  resources: { type: String, required: true },
+});
+
 const instituteFormSchema = new mongoose.Schema({
   
   name: {
-    type: String,
-    required: true,
-  },
-  designation: {
     type: String,
     required: true,
   },
@@ -22,28 +24,7 @@ const instituteFormSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  no_of_students: {
-    type: Number,
-    required: true,
-  },
-  target_year: {
-    type: Number,
-    required: true,
-  },
-  duration: {
-    type: Number,
-    required: true,
-  },
-  duration_type: {
-    type: String,
-    required: true,
-    enum: ["day", "week","month"],
-    default: "month", 
-  },
-  category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true }, 
-
-  course: { type: mongoose.Schema.Types.ObjectId, ref: "Course",required: true},
-  service: { type: mongoose.Schema.Types.ObjectId, ref: "Services",required: true},
+  services: { type: [serviceSchema] },  //placementtraning,internship,skilling
 
   enquiry: { type: String, required: true},
 });

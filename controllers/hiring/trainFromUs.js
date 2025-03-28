@@ -7,116 +7,105 @@ exports.createTrainFromUs = async (req, res) => {
   try {
     const {
       name,
-      designation,
       company_name,
       mobile,
       email,
-      enquiry,
-      category,
-      course,
-      type,
-      count,
-      batch_size,
-      location,
-      client_location,
-      duration,
-      duration_type,
-      
+      trainee_modal,
+      skills
     } = req.body;
-      const existingHireFormUs = await TrainFromUs.findOne({email});
-      if (existingHireFormUs) {
-        return res.status(403).json({ message: [{ key: "error", value: "Email exists" }] });
-      }
 
-    if (
-      !name ||
-      !designation ||
-      !company_name ||
-      !mobile ||
-      !email ||
-      !enquiry ||
-      !course ||
-      !category ||
-      !type ||
-      !location ||
-      !duration
-        ) {
-      return res.status(400).json({
-        message: [{ key: "error", value: "Required fields are missing" }],
+    const existingTrainFromUs = await TrainFromUs.findOne({ email });
+    if (existingTrainFromUs) {
+      return res.status(403).json({ 
+        message: [{ key: "error", value: "Email already exists" }] 
       });
     }
 
-    const newTrainApply = new TrainFromUs({
+    if (!name || !company_name || !mobile || !email) {
+      return res.status(400).json({
+        message: [{ key: "error", value: "Required fields are missing" }]
+      });
+    }
+
+    const newTrainApplication = new TrainFromUs({
       name,
-      designation,
       company_name,
       mobile,
       email,
-      enquiry,
-      category,
-      course,
-      type,
-      count,
-      batch_size,
-      location,
-      client_location,
-      duration,
-      duration_type
+      trainee_modal,
+      skills: skills || [] 
     });
 
-    await newTrainApply.save();
-    const populatedApplication = await TrainFromUs.findById(newTrainApply._id).populate("course").populate("category");
-    const courseInfo = populatedApplication.course;
-    const categoryInfo = populatedApplication.category;
+    await newTrainApplication.save();
 
-    // User email
+    // Prepare email content
     const receiverSubject = `Hi ${name}, Thank you for Applying`;
     const receiverBody = `
-      <p>Hello,</p>
+      <p>Hello ${name},</p>
       <p>Thank you for your interest in our training program.</p>
       <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Designation:</strong> ${designation}</p>
+      <p><strong>Company:</strong> ${company_name}</p>
       <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Phone:</strong> ${mobile}</p>
-      <p><strong>Enquiry:</strong> ${enquiry}</p>
-      <p><strong>Duration:</strong> ${duration},${duration_type}</p>
-      <p><strong>Course:</strong> ${courseInfo.course_name}</p>
-      <p><strong>Category:</strong> ${categoryInfo.category_name}</p>
+      <p><strong>Mobile:</strong> ${mobile}</p>
+      ${trainee_modal ? `<p><strong>Trainee Modal:</strong> ${trainee_modal}</p>` : ''}
+      ${skills && skills.length > 0 ? `
+        <p><strong>Skills:</strong></p>
+        <ul>
+          ${skills.map(skill => `
+            <li>
+              <strong>Skillset:</strong> ${skill.skillset}
+              <br><strong>Resources:</strong> ${skill.resources}
+            </li>
+          `).join('')}
+        </ul>
+      ` : ''}
     `;
 
+    // Send email to the applicant
     const receiverEmailSent = await sendEmail(email, receiverSubject, receiverBody);
 
-    // Admin email
-    const senderSubject = `${name} Applied for Training`;
+    // Prepare admin email
+    const senderSubject = `New Training Application from ${name}`;
     const senderBody = `
-      <p>Hello,</p>
-      <p>We have received a new training application from:</p>
+      <p>A new training application has been received:</p>
       <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Designation:</strong> ${designation}</p>
+      <p><strong>Company:</strong> ${company_name}</p>
       <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Phone:</strong> ${mobile}</p>
-      <p><strong>Enquiry:</strong> ${enquiry}</p>
-      <p><strong>Duration:</strong> ${duration},${duration_type}</p>
-
-      <p><strong>Course:</strong> ${courseInfo.course_name}</p>
-      <p><strong>Category:</strong> ${categoryInfo.category_name}</p>
+      <p><strong>Mobile:</strong> ${mobile}</p>
+      ${trainee_modal ? `<p><strong>Trainee Modal:</strong> ${trainee_modal}</p>` : ''}
+      ${skills && skills.length > 0 ? `
+        <p><strong>Skills:</strong></p>
+        <ul>
+          ${skills.map(skill => `
+            <li>
+              <strong>Skillset:</strong> ${skill.skillset}
+              <br><strong>Resources:</strong> ${skill.resources}
+            </li>
+          `).join('')}
+        </ul>
+      ` : ''}
     `;
 
+    // Send email to admin
     const senderEmailSent = await sendEmail(emailConfig.user, senderSubject, senderBody);
 
     if (receiverEmailSent && senderEmailSent) {
-      console.log("Emails sent successfully");
-      return res.status(201).json({ message: [{ key: "success", value: "Application successfully submitted" }] });
+      return res.status(201).json({ 
+        message: [{ key: "success", value: "Application successfully submitted" }],
+        data: newTrainApplication 
+      });
     } else {
-      console.error("Error sending emails");
-      return res.status(500).json({ message: [{ key: "error", value: "Error sending emails" }] });
+      return res.status(500).json({ 
+        message: [{ key: "error", value: "Error sending confirmation emails" }] 
+      });
     }
   } catch (error) {
     console.error("Error during the application process:", error);
-    return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
+    return res.status(500).json({ 
+      message: [{ key: "error", value: "Internal server error" }] 
+    });
   }
 };
-
 
 exports.getAllTrainFromUs = async (req, res) => {
     try {

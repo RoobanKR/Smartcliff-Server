@@ -46,7 +46,6 @@ const businessServicesRoutes = require("./routes/services/businessServicesRoutes
 const servicesRoutes = require("./routes/services/servicesRoutes");
 const servicesAboutRoutes = require("./routes/services/aboutRoutes");
 const servicesProcessRoutes = require("./routes/services/processRoutes");
-const servicesClientRoutes = require("./routes/services/clientRoutes");
 const serviceOpportunityRoutes = require("./routes/services/serviceOppertunityRoutes");
 const placementTrainingTrackRoutes = require("./routes/services/placementTrainingTrackRoutes");
 
@@ -73,6 +72,7 @@ const learningJourneyRoutes = require("./routes/bussiness/learningJourneyRoutes"
 const wcyRoutes = require("./routes/bussiness/WCYHireRoutes");
 const howItWorksRoutes = require("./routes/bussiness/howItWorksRoutes");
 const currentAvialbilityRoutes = require("./routes/bussiness/currentAvailabilityRoutes");
+const clientRoutes = require("./routes/bussiness/clientRoutes");
 
 // home service 
 const homeServicesRoutes = require("./routes/home/homeSerivesRoutes");
@@ -97,10 +97,9 @@ app.use(express.json({ extended: false }));
 app.use(
   cors({
     origin: [
-      // "http://localhost:3000",
-      "https://smartcliff.academy",
-      "https://smart-cliff-next-js-git-develop-roobankrs-projects.vercel.app/"
-      // "http://localhost:3535",
+      "http://localhost:3000",
+      "http://smartcliff.academy",
+      "http://localhost:3535",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
@@ -177,7 +176,7 @@ app.use("/", yearlyServicesRoutes)
 app.use("/", businessServicesRoutes)
 app.use("/", servicesAboutRoutes)
 app.use("/", servicesProcessRoutes)
-app.use("/", servicesClientRoutes)
+app.use("/", clientRoutes)
 app.use("/", serviceOpportunityRoutes)
 app.use("/",placementTrainingTrackRoutes);
 

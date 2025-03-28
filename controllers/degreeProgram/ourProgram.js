@@ -7,9 +7,6 @@ exports.createOurProgram = async (req, res) => {
       const { title, description, service,business_service,college,degree_program } = req.body;
 
 
-      if (!title || !description) {
-          return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
-      }
 
   const iconFile = req.files.icon;
    

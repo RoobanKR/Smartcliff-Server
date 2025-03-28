@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const ourProgramSchema = new mongoose.Schema({
   title: { type: String, required: true },
-  description: { type: String, required: true },
+  description: { type: String },
 
    icon: {type: String,required:true,max: 3 * 1024 * 1024},
     service: { type: mongoose.Schema.Types.ObjectId, ref: "Services",required: true},

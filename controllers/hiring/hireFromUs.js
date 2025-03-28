@@ -3,92 +3,68 @@ const { sendEmail } = require("../../utils/sendEmail");
 const config = require('config');
 const emailConfig = config.get('emailConfig');
 
+
 exports.createHireFromUs = async (req, res) => {
   try {
-    const { name, designation, company_name, mobile, email, enquiry,count,course } =
-      req.body;
-      const existingHireFormUs = await HireFromUs.findOne(email);
+      const { name, company_name, mobile, email, enquiry, skillsetRequirements } = req.body;
+
+      const existingHireFormUs = await HireFromUs.findOne({ email });
       if (existingHireFormUs) {
-        return res.status(403).json({ message: [{ key: "error", value: "Email exists" }] });
+          return res.status(403).json({ message: [{ key: "error", value: "Email already exists" }] });
       }
 
-    if (
-      !name ||
-      !designation ||
-      !company_name ||
-      !mobile ||
-      !email ||
-      !enquiry ||
-      !course ||
-      !count
-    ) {
-      return res.status(400).json({
-        message: [
-          {
-            key: "error",
-            value: "Required fields are missing in hiring From Us",
-          },
-        ],
-      });
-    }
+      if (!name || !company_name || !mobile || !email || !enquiry) {
+          return res.status(400).json({
+              message: [{ key: "error", value: "Required fields are missing in hiring From Us" }],
+          });
+      }
 
-    const newHiringApply = new HireFromUs({
-      name,
-      designation,
-      company_name,
-      mobile,
-      email,
-      enquiry,
-      count,
-      course
-    });
+      const newHiringApply = new HireFromUs({ name, company_name, mobile, email, enquiry, skillsetRequirements });
 
-    await newHiringApply.save();
-    const populatedApplication = await newHiringApply.populate("course");
-    const courseInfo = populatedApplication.course;
+      await newHiringApply.save();
 
-    const receiverEmail = email;
-    const senderEmail = emailConfig.user;
-    // user mail
-    const receiverSubject = ` Hi ${name}, Thank you for Applying `;
-    const receiverBody = `
-    <p>Hello,</p>
-    <p>We have received a new job application from:</p>
-    <p><strong>Name:</strong> ${name}</p>
-    <p><strong>Email:</strong> ${email}</p>
-    <p><strong>Phone:</strong> ${mobile}</p>
-    <p><strong>Hiring Enquiry:</strong> ${enquiry}</p>
-    <p><strong>Company:</strong> ${courseInfo.course_name}
+      // No need for populate, just find the saved document
+      const savedApplication = await HireFromUs.findById(newHiringApply._id);
 
-`;
 
-        const receiverEmailSent = await sendEmail(receiverEmail, receiverSubject, receiverBody);
-        // admin mail
-        const senderSubject = `${name} Thank you for Applying`;
-        const senderBody = `
-        <p>Hello,</p>
-        <p>We have received a new job application from:</p>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Phone:</strong> ${mobile}</p>
-        <p><strong>Hiring Enquiry:</strong> ${enquiry}</p>
-        <p><strong>Company:</strong> ${courseInfo.course_name}
+      // Ensure skillsetRequirements are formatted correctly
+      const skillsList = savedApplication.skillsetRequirements.length > 0
+          ? savedApplication.skillsetRequirements.map(skill => skill.skillset).join(', ')
+          : "No skillsetRequirements provided";
 
-          `;
-        const senderEmailSent = await sendEmail(senderEmail, senderSubject, senderBody);
+      // Prepare email content
+      const receiverEmail = email;
+      const senderEmail = emailConfig.user;
+      const receiverSubject = `Hi ${name}, Thank you for Applying`;
+      const receiverBody = `
+          <p>Hello,</p>
+          <p>We have received a new job application from:</p>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Phone:</strong> ${mobile}</p>
+          <p><strong>Hiring Enquiry:</strong> ${enquiry}</p>
+          <p><strong>Skills:</strong> ${skillsList}</p>
+      `;
 
-        if (receiverEmailSent && senderEmailSent) {
-            console.log('Emails sent successfully');
-            return res.status(201).json({ message: [{ key: 'success', value: 'Student Successfully Submited ' }] });
-        } else {
-            console.error('Error sending emails');
-            return res.status(500).json({ message: [{ key: 'error', value: 'Error sending emails' }] });
-        }
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: [{ key: 'error', value: 'Internal server error' }] });
-    }
+      const receiverEmailSent = await sendEmail(receiverEmail, receiverSubject, receiverBody);
+
+      // Admin email
+      const senderSubject = `${name} Thank you for Applying`;
+      const senderBody = receiverBody;
+      const senderEmailSent = await sendEmail(senderEmail, senderSubject, senderBody);
+
+      if (receiverEmailSent && senderEmailSent) {
+          return res.status(201).json({ message: [{ key: 'success', value: 'Application submitted successfully' }] });
+      } else {
+          console.error('Error sending emails');
+          return res.status(500).json({ message: [{ key: 'error', value: 'Error sending emails' }] });
+      }
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: [{ key: 'error', value: 'Internal server error' }] });
+  }
 };
+
 
 exports.sendResponseEmailhireFromUs = async (req, res) => {
   try {
@@ -109,7 +85,6 @@ exports.sendResponseEmailhireFromUs = async (req, res) => {
     const responseEmailSent = await sendEmail(receiverEmail, receiverSubject, receiverBody);
 
     if (responseEmailSent) {
-      console.log("Response email sent successfully");
       return res.status(200).json({ message: "Response email sent successfully" });
     } else {
       console.error("Error sending response email");

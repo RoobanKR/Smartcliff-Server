@@ -1,6 +1,4 @@
 const VisionMision = require("../../models/about/vison-missonModal");
-const path = require("path");
-const fs = require("fs");
 
 exports.createVisionMision = async (req, res) => {
   try {
@@ -15,33 +13,10 @@ exports.createVisionMision = async (req, res) => {
         });
     }
 
-    if (!req.files || !req.files.image) {
-      return res.status(400).json({
-        message: [{ key: "error", value: "Image is required" }],
-      });
-    }
-
-    const imageFile = req.files.image;
-
-    if (imageFile.size > 3 * 1024 * 1024) {
-      return res.status(400).json({
-        message: [{ key: "error", value: "Image size exceeds the 3MB limit" }],
-      });
-    }
-
-    const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-    const uploadPath = path.join(
-      __dirname,
-      "../../uploads/about/visionmission",
-      uniqueFileName
-    );
-
-    await imageFile.mv(uploadPath);
 
     const newVisionMision = new VisionMision({
       type,
       description,
-      image: uniqueFileName,
       createdBy:req?.user?.email || "roobankr5@gmail.com",
     });
 
@@ -62,15 +37,7 @@ exports.createVisionMision = async (req, res) => {
 
 exports.getAllVisionMision = async (req, res) => {
   try {
-    const allVisionMisions = await VisionMision.find();
-    const getVisionMisions = allVisionMisions.map((about) => {
-      const visionMisions = about.toObject();
-      return {
-        ...visionMisions,
-        image:
-          process.env.BACKEND_URL + "/uploads/about/visionmission/" + visionMisions.image,
-      };
-    });
+    const getVisionMisions = await VisionMision.find();
 
     return res.status(200).json({
       message: [{ key: "success", value: "About US Retrieved successfully" }],
@@ -101,11 +68,7 @@ exports.getVisionMisionById = async (req, res) => {
       message: [
         { key: "success", value: "Vision Mision based Retrieved successfully" },
       ],
-      visionmissionById: {
-        ...visionmission.toObject(),
-        image:
-          process.env.BACKEND_URL + "/uploads/about/visionmission/" + visionmission.image,
-      },
+      visionmissionById: visionmission,
     });
   } catch (error) {
     console.error(error);
@@ -122,7 +85,6 @@ exports.editVisionMisionById = async (req, res) => {
   try {
     const visionmissionId = req.params.id;
     const updatedData = req.body;
-    const imageFile = req.files ? req.files.image : null;
 
     const existingVisionMission = await VisionMision.findById(visionmissionId);
 
@@ -132,35 +94,6 @@ exports.editVisionMisionById = async (req, res) => {
       });
     }
 
-    if (imageFile) {
-      if (!existingVisionMission) {
-        return res
-          .status(404)
-          .json({ message: { key: "error", value: "vision mission not found" } });
-      }
-
-      const imagePathToDelete = path.join(
-        __dirname,
-        "../../uploads/about/visionmission",
-        existingVisionMission.image
-      );
-      if (fs.existsSync(imagePathToDelete)) {
-        fs.unlink(imagePathToDelete, (err) => {
-          if (err) {
-            console.error("Error deleting image:", err);
-          }
-        });
-      }
-
-      const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-      const uploadPath = path.join(
-        __dirname,
-        "../../uploads/about/visionmission",
-        uniqueFileName
-      );
-      await imageFile.mv(uploadPath);
-      updatedData.image = uniqueFileName;
-    }
     updatedData.updatedBy = req.user.email || "roobankr6@gmail.com"; 
     updatedData.updatedOn = new Date();
 
@@ -202,16 +135,6 @@ exports.deleteVisionMisionById = async (req, res) => {
         });
     }
 
-    if (deletedVisionMission.image) {
-      const imagePath = path.join(
-        __dirname,
-        "../../uploads/about/visionmission",
-        deletedVisionMission.image
-      );
-      if (fs.existsSync(imagePath) && fs.lstatSync(imagePath).isFile()) {
-        fs.unlinkSync(imagePath);
-      }
-    }
 
     res
       .status(200)

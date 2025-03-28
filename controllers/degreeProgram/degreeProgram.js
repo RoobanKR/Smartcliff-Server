@@ -4,11 +4,7 @@ const fs = require("fs");
 
 exports.createDegreeProgram = async (req, res) => {
   try {
-    const { title, description, program_name, slogan, slug, location, service, business_service, college } = req.body;
-
-    if (!title || !description) {
-      return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
-    }
+    const { title, description, program_name, slogan, slug,year,  service, business_service, college } = req.body;
 
     let uploadedImages = [];
     if (req.files?.images) {
@@ -33,8 +29,8 @@ exports.createDegreeProgram = async (req, res) => {
       program_name,
       slogan,
       description,
-      location,
       images: uploadedImages,
+      year,
       service,
       business_service,
       college: collegeArray // Ensure college is an array before saving

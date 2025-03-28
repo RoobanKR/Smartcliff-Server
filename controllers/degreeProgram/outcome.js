@@ -4,42 +4,48 @@ const fs = require('fs');
 
 
 exports.createOutcome = async (req, res) => {
-    try {
-        const { title,service,business_service,college,degree_program } = req.body;
+  try {
+      const { title, service, business_service, college, degree_program } = req.body;
 
-        if (!title) {
-            return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
-        }
+      if (!title) {
+          return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
+      }
 
-  const iconFile = req.files.icon;
-   
-           if (iconFile.size > 3 * 1024 * 1024) {
-               return res.status(400).json({
-                   message: [{ key: "error", value: "Image size exceeds the 3MB limit" }],
-               });
-           }
-   
-           const uniqueFileName = `${Date.now()}_${iconFile.name}`;
-           const uploadPath = path.join(__dirname, "../../uploads/degreeprogram/outcomes", uniqueFileName);
-   
-           await iconFile.mv(uploadPath);
-   
-      
-            const newOutcome = new Outcome({
-                title,
-                icon: uniqueFileName,
-                service,business_service,college,degree_program
-            });
+      let uniqueFileName = null; // Initialize uniqueFileName as null
 
-            await newOutcome.save();
+      // Check if an icon file is provided
+      if (req.files && req.files.icon) {
+          const iconFile = req.files.icon;
 
-            return res.status(201).json({ message: [{ key: "Success", value: "Outcome Added Successfully" }] });
-        } catch (error) {
-            return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
-        }
-    
+          if (iconFile.size > 3 * 1024 * 1024) {
+              return res.status(400).json({
+                  message: [{ key: "error", value: "Image size exceeds the 3MB limit" }],
+              });
+          }
+
+          uniqueFileName = `${Date.now()}_${iconFile.name}`;
+          const uploadPath = path.join(__dirname, "../../uploads/degreeprogram/outcomes", uniqueFileName);
+
+          await iconFile.mv(uploadPath);
+      }
+
+      const newOutcome = new Outcome({
+          title,
+          icon: uniqueFileName, // This will be null if no icon was uploaded
+          service,
+          business_service,
+          college,
+          degree_program
+      });
+
+      await newOutcome.save();
+
+      return res.status(201).json({ message: [{ key: "Success", value: "Outcome Added Successfully" }] });
+  } catch (error) {
+      console.error(error); // Log the error for debugging
+      return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
+  }
 };
-
 exports.getAllOutcome = async (req, res) => {
     try {
       const outcome = await Outcome.find().populate("degree_program").populate('service').populate('business_service').populate('college');

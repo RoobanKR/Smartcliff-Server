@@ -1,15 +1,20 @@
 const mongoose = require("mongoose");
 
+
+
+const skillSchema = new mongoose.Schema({
+  skillset: { type: String, required: true },
+  resources: { type: String, required: true },
+});
+
+
 const hiringFromUsSchema = new mongoose.Schema({
   
   name: {
     type: String,
     required: true,
   },
-  designation: {
-    type: String,
-    required: true,
-  },
+ 
   company_name: {
     type: String,
     required: true,
@@ -22,11 +27,7 @@ const hiringFromUsSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  count: {
-    type: String,
-    required: true,
-  },
-  course: { type: mongoose.Schema.Types.ObjectId, ref: "Course",required: true},
+  skillsetRequirements: { type: [skillSchema] },
 
   enquiry: { type: String, required: true},
 });

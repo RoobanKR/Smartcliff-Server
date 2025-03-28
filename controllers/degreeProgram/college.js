@@ -99,7 +99,6 @@ exports.updateCollege = async (req, res) => {
     try {
       const collegeId = req.params.id;
       const updatedData = req.body;
-      const imageFile = req.files ? req.files.image : null;
       const logoFile = req.files ? req.files.logo : null;
   
       const existingCollege = await College.findById(collegeId);
@@ -114,10 +113,6 @@ exports.updateCollege = async (req, res) => {
       if (updatedData.slug) existingCollege.slug = updatedData.slug;
       if (updatedData.collegeName) existingCollege.collegeName = updatedData.collegeName;
       if (updatedData.description) existingCollege.description = updatedData.description;
-      if (updatedData.location) existingCollege.location = updatedData.location;
-      if (updatedData.address) existingCollege.address = updatedData.address;
-      if (updatedData.phone) existingCollege.phone = updatedData.phone;
-      if (updatedData.email) existingCollege.email = updatedData.email;
       if (updatedData.website) existingCollege.website = updatedData.website;
   
   
