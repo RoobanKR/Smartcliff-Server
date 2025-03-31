@@ -11,7 +11,7 @@ exports.createTrainFromUs = async (req, res) => {
       mobile,
       email,
       trainee_modal,
-      skills
+      skillsetRequirements
     } = req.body;
 
     const existingTrainFromUs = await TrainFromUs.findOne({ email });
@@ -33,7 +33,7 @@ exports.createTrainFromUs = async (req, res) => {
       mobile,
       email,
       trainee_modal,
-      skills: skills || [] 
+      skillsetRequirements: skillsetRequirements || [] 
     });
 
     await newTrainApplication.save();
@@ -48,10 +48,10 @@ exports.createTrainFromUs = async (req, res) => {
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Mobile:</strong> ${mobile}</p>
       ${trainee_modal ? `<p><strong>Trainee Modal:</strong> ${trainee_modal}</p>` : ''}
-      ${skills && skills.length > 0 ? `
+      ${skillsetRequirements && skillsetRequirements.length > 0 ? `
         <p><strong>Skills:</strong></p>
         <ul>
-          ${skills.map(skill => `
+          ${skillsetRequirements.map(skill => `
             <li>
               <strong>Skillset:</strong> ${skill.skillset}
               <br><strong>Resources:</strong> ${skill.resources}
@@ -73,10 +73,10 @@ exports.createTrainFromUs = async (req, res) => {
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Mobile:</strong> ${mobile}</p>
       ${trainee_modal ? `<p><strong>Trainee Modal:</strong> ${trainee_modal}</p>` : ''}
-      ${skills && skills.length > 0 ? `
+      ${skillsetRequirements && skillsetRequirements.length > 0 ? `
         <p><strong>Skills:</strong></p>
         <ul>
-          ${skills.map(skill => `
+          ${skillsetRequirements.map(skill => `
             <li>
               <strong>Skillset:</strong> ${skill.skillset}
               <br><strong>Resources:</strong> ${skill.resources}

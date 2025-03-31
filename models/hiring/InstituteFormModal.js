@@ -24,7 +24,7 @@ const instituteFormSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  services: { type: [serviceSchema] },  //placementtraning,internship,skilling
+  services: { type: [serviceSchema] },  // Array of services
 
   enquiry: { type: String, required: true},
 });

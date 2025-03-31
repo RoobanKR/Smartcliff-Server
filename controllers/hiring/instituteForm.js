@@ -19,9 +19,7 @@ exports.createInstituteForm = async (req, res) => {
       return res.status(403).json({ 
         message: [{ key: "error", value: "Email already exists" }] 
       });
-    }
-
-    if (!name || !institute_name || !mobile || !email || !enquiry) {
+    }    if (!name || !institute_name || !mobile || !email || !enquiry) {
       return res.status(400).json({
         message: [{ key: "error", value: "Required fields are missing" }]
       });
