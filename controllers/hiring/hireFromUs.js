@@ -24,14 +24,6 @@ exports.createHireFromUs = async (req, res) => {
       await newHiringApply.save();
 
       // No need for populate, just find the saved document
-      const savedApplication = await HireFromUs.findById(newHiringApply._id);
-
-
-      // Ensure skillsetRequirements are formatted correctly
-      const skillsList = savedApplication.skillsetRequirements.length > 0
-          ? savedApplication.skillsetRequirements.map(skill => skill.skillset).join(', ')
-          : "No skillsetRequirements provided";
-
       // Prepare email content
       const receiverEmail = email;
       const senderEmail = emailConfig.user;
@@ -43,7 +35,17 @@ exports.createHireFromUs = async (req, res) => {
           <p><strong>Email:</strong> ${email}</p>
           <p><strong>Phone:</strong> ${mobile}</p>
           <p><strong>Hiring Enquiry:</strong> ${enquiry}</p>
-          <p><strong>Skills:</strong> ${skillsList}</p>
+      ${skillsetRequirements && skillsetRequirements.length > 0 ? `
+        <p><strong>Skills:</strong></p>
+        <ul>
+          ${skillsetRequirements.map(skill => `
+            <li>
+              <strong>Skillset:</strong> ${skill.skillset}
+              <br><strong>Resources:</strong> ${skill.resources}
+            </li>
+          `).join('')}
+        </ul>
+      ` : ''}
       `;
 
       const receiverEmailSent = await sendEmail(receiverEmail, receiverSubject, receiverBody);
