@@ -7,7 +7,7 @@ exports.createOurPartners = async (req, res) => {
       const { company,websiteLink,service,business_service, degree_program } = req.body;
 
 
-      if (!company || !description) {
+      if (!company) {
           return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
       }
 
@@ -93,7 +93,7 @@ exports.getAllOurPartners = async (req, res) => {
 
     exports.updateOurPartners = async (req, res) => {
         const { id } = req.params;
-        const { company, description, location, service, websiteLink, business_service, degree_program } = req.body;
+        const { company, service, websiteLink, business_service, degree_program } = req.body;
         const newImageFile = req.files?.image;
     
         try {
