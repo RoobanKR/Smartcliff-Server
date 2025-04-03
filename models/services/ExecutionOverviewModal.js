@@ -1,37 +1,27 @@
 const mongoose = require('mongoose');
 
 const executionOverviewSchema = new mongoose.Schema({
-    type: [{
+ 
+    name: {
         type: String,
-        enum: ['Clientname', 'Institution Name', 'Industry Partner', 'College Name'],
-        required: true
-    }],
-    typeName: [{
-        type: String,
-        required: true
-    }],
-    stack: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Execution_Highlights',
-        required: true
-    },
-    duration: {
-        type: String,
-        required: true
-    },
-    batch_size: {
-        type: Number,
         required: true
     },
     image: {
         type: String,
         required: true
     },
+    sections: [{
+        title: {
+            type: String,
+            required: true
+        },
+        count: {
+            type: Number,
+            required: true
+        }
+    }],
+  
 
-    year: {
-        type: Number,
-        required: true
-    },
     service: { type: mongoose.Schema.Types.ObjectId, ref: "Services",required: true},
   business_service: { type: mongoose.Schema.Types.ObjectId, ref: 'business_service', required: true }, 
 

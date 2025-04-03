@@ -2,19 +2,15 @@ const ExecutionOverview = require("../../models/services/ExecutionOverviewModal"
 const path = require("path");
 const fs = require("fs");
 
+
 exports.createExecutionOverview = async (req, res) => {
   try {
     let {
-      type,
-      typeName,
-      stack,
-      duration,
-      year,
-      batch_size,
+      name,
       service,
       business_service,
+      sections 
     } = req.body;
-
 
     if (!req.files || !req.files.image) {
       return res.status(400).json({
@@ -24,6 +20,7 @@ exports.createExecutionOverview = async (req, res) => {
 
     const imageFile = req.files.image;
 
+    // Validate image size
     if (imageFile.size > 3 * 1024 * 1024) {
       return res.status(400).json({
         message: [{ key: "error", value: "Image size exceeds the 3MB limit" }],
@@ -40,13 +37,9 @@ exports.createExecutionOverview = async (req, res) => {
     await imageFile.mv(uploadPath);
 
     const newExecutionOverview = new ExecutionOverview({
-      type: Array.isArray(type) ? type : JSON.parse(type),
-      typeName: Array.isArray(typeName) ? typeName : JSON.parse(typeName),   
-      stack,
-      batch_size,
-      duration,
+      name,
       image: uniqueFileName,
-      year,
+      sections: Array.isArray(sections) ? sections : JSON.parse(sections),
       service,
       business_service,
     });
@@ -69,7 +62,6 @@ exports.createExecutionOverview = async (req, res) => {
 exports.getAllExecutionOverviews = async (req, res) => {
   try {
     const executionOverviews = await ExecutionOverview.find()
-      .populate("stack")
       .populate("service")
       .populate("business_service");
     if (!executionOverviews || executionOverviews.length === 0) {
@@ -104,7 +96,6 @@ exports.getAllExecutionOverviews = async (req, res) => {
 exports.getExecutionOverviewById = async (req, res) => {
   try {
     const executionOverview = await ExecutionOverview.findById(req.params.id)
-      .populate("stack")
       .populate("service")
       .populate("business_service");
     if (!executionOverview) {
@@ -152,11 +143,8 @@ exports.updateExecutionOverview = async (req, res) => {
     }
 
     // Ensure type and typeName are properly formatted as arrays
-    if (updatedData.type) {
-      updatedData.type = Array.isArray(updatedData.type) ? updatedData.type : JSON.parse(updatedData.type);
-    }
-    if (updatedData.typeName) {
-      updatedData.typeName = Array.isArray(updatedData.typeName) ? updatedData.typeName : JSON.parse(updatedData.typeName);
+    if (updatedData.sections) {
+      updatedData.sections = Array.isArray(updatedData.sections) ? updatedData.sections : JSON.parse(updatedData.sections);
     }
 
     if (imageFile) {

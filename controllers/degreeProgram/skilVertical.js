@@ -60,7 +60,20 @@ exports.getSkillVerticalById = async (req, res) => {
 exports.updateSkillVertical = async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedSkillVertical = await SkillVertical.findByIdAndUpdate(id, req.body, { new: true });
+    const { programName, skillVerticals, service, business_service, college, degree_program } = req.body;
+
+    const updatedSkillVertical = await SkillVertical.findByIdAndUpdate(
+      id,
+      {
+        programName,
+        skillVerticals,
+        service,
+        business_service,
+        college,
+        degree_program
+      },
+      { new: true }
+    ).populate("degree_program").populate('service').populate('business_service').populate('college');
 
     if (!updatedSkillVertical) {
       return res.status(404).json({ message: [{ key: "error", value: "Skill vertical not found" }] });

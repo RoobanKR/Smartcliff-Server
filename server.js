@@ -75,8 +75,8 @@ const currentAvialbilityRoutes = require("./routes/bussiness/currentAvailability
 const clientRoutes = require("./routes/bussiness/clientRoutes");
 
 // home service 
-const homeServicesRoutes = require("./routes/home/homeSerivesRoutes");
-
+const homeServicesRoutes = require("./routes/home/homeSerivesCountRoutes");
+const homeExecutionHighlightsRoutes = require("./routes/home/HomeExectionHighlightsRoutes");
 // About 
 const aboutAboutUsRoutes = require("./routes/about/aboutUsRoutes");
 const visionMissionUsRoutes = require("./routes/about/visionmissionRoutes");
@@ -97,9 +97,9 @@ app.use(express.json({ extended: false }));
 app.use(
   cors({
     origin: [
-      // "http://localhost:3000",
+      "http://localhost:3000",
       "https://smartcliff.academy",
-      // "http://localhost:3535",
+      "http://localhost:3535",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
@@ -162,7 +162,7 @@ app.use("/",skillVerticalRoutes)
 
 // home
 app.use("/", homeServicesRoutes)
-
+app.use("/", homeExecutionHighlightsRoutes)
 // Abbout
 app.use("/", aboutAboutUsRoutes)
 app.use("/", visionMissionUsRoutes)
