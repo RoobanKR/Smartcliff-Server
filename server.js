@@ -97,9 +97,9 @@ app.use(express.json({ extended: false }));
 app.use(
   cors({
     origin: [
-      "http://localhost:3000",
+      // "http://localhost:3000",
       "https://smartcliff.academy",
-      "http://localhost:3535",
+      // "http://localhost:3535",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
