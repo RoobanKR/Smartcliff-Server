@@ -28,9 +28,6 @@ const trainFromUsSchema = new mongoose.Schema({
   },
   
  
-  trainee_modal: {
-    type: String,
-  },
   skillsetRequirements: { type: [skillSchema] },
 
 });

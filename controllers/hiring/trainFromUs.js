@@ -10,7 +10,6 @@ exports.createTrainFromUs = async (req, res) => {
       company_name,
       mobile,
       email,
-      trainee_modal,
       skillsetRequirements
     } = req.body;
 
@@ -32,7 +31,6 @@ exports.createTrainFromUs = async (req, res) => {
       company_name,
       mobile,
       email,
-      trainee_modal,
       skillsetRequirements: skillsetRequirements || [] 
     });
 
@@ -47,7 +45,6 @@ exports.createTrainFromUs = async (req, res) => {
       <p><strong>Company:</strong> ${company_name}</p>
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Mobile:</strong> ${mobile}</p>
-      ${trainee_modal ? `<p><strong>Trainee Modal:</strong> ${trainee_modal}</p>` : ''}
       ${skillsetRequirements && skillsetRequirements.length > 0 ? `
         <p><strong>Skills:</strong></p>
         <ul>
@@ -72,7 +69,6 @@ exports.createTrainFromUs = async (req, res) => {
       <p><strong>Company:</strong> ${company_name}</p>
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Mobile:</strong> ${mobile}</p>
-      ${trainee_modal ? `<p><strong>Trainee Modal:</strong> ${trainee_modal}</p>` : ''}
       ${skillsetRequirements && skillsetRequirements.length > 0 ? `
         <p><strong>Skills:</strong></p>
         <ul>
