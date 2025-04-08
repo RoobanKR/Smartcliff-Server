@@ -1,3 +1,4 @@
+const c = require('config');
 const mongoose = require('mongoose');
 
 const targetStudentSchema = new mongoose.Schema({
@@ -7,6 +8,7 @@ const targetStudentSchema = new mongoose.Schema({
     service: { type: mongoose.Schema.Types.ObjectId, ref: "Services",required: true},
     business_service: { type: mongoose.Schema.Types.ObjectId, ref: 'business_service', required: true }, 
     degree_program: { type: mongoose.Schema.Types.ObjectId, ref: "Degree_Program",required: true},
+    company: { type: mongoose.Schema.Types.ObjectId, ref: "Company",default:null},
 });
 
 module.exports = mongoose.model('Target-Studnet', targetStudentSchema);

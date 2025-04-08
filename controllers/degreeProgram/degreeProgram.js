@@ -4,7 +4,7 @@ const fs = require("fs");
 
 exports.createDegreeProgram = async (req, res) => {
   try {
-    const { title, description, program_name, slogan, slug,year,  service, business_service, college } = req.body;
+    const { title, description, program_name, slogan, slug,year,  service, business_service, college,company } = req.body;
 
     let uploadedImages = [];
     if (req.files?.images) {
@@ -33,7 +33,8 @@ exports.createDegreeProgram = async (req, res) => {
       year,
       service,
       business_service,
-      college: collegeArray // Ensure college is an array before saving
+      college: collegeArray, // Ensure college is an array before saving
+      company
     });
 
     await newDegreeProgram.save();
@@ -47,7 +48,7 @@ exports.createDegreeProgram = async (req, res) => {
 
 exports.getAllDegreeProgram = async (req, res) => {
   try {
-    const degreePrograms = await DegreeProgram.find().populate('service').populate('business_service').populate('college');
+    const degreePrograms = await DegreeProgram.find().populate('service').populate('business_service').populate('college').populate('company');
     const degreeProgram = degreePrograms.map((degree) => {
       const serviceAboutObj = degree.toObject();
 
@@ -75,7 +76,7 @@ exports.getAllDegreeProgram = async (req, res) => {
 };
 exports.getDegreeProgramById = async (req, res) => {
   try {
-    const degreeProgram = await DegreeProgram.findById(req.params.id).populate('service').populate('business_service').populate('college');
+    const degreeProgram = await DegreeProgram.findById(req.params.id).populate('service').populate('business_service').populate('college').populate('company');
 
     if (!degreeProgram) {
       return res
@@ -110,7 +111,7 @@ exports.getDegreeProgramById = async (req, res) => {
 exports.updateDegreeProgram = async (req, res) => {
   try {
     const degreeProgramId = req.params.degreeProgramId;
-    const { title, description, program_name, slogan, slug, location, service, business_service, college } = req.body;
+    const { title, description, program_name, slogan, slug, location, service, business_service, college,company } = req.body;
 
     let imagesFiles = req.files?.images || [];
     if (!Array.isArray(imagesFiles)) {
@@ -165,6 +166,7 @@ exports.updateDegreeProgram = async (req, res) => {
     existingDegreeProgram.service = service;
     existingDegreeProgram.business_service = business_service;
     existingDegreeProgram.college = collegeArray;
+    existingDegreeProgram.company = company;
     existingDegreeProgram.images = uploadedImages;
 
     await existingDegreeProgram.save();

@@ -5,13 +5,14 @@ const fs = require("fs");
 exports.createOurSponsors = async (req, res) => {
   try {
     const {
-      company,
+      companyName,
       type,
       category,
       contributions,
       service,
       business_service,
       degree_program,
+      company
     } = req.body;
 
     const logoFile = req.files.logo;
@@ -32,7 +33,7 @@ exports.createOurSponsors = async (req, res) => {
     await logoFile.mv(uploadPath);
 
     const newOurSponsors = new OurSponsors({
-      company,
+      companyName,
       type,
       category,
       contributions:Array.isArray(contributions) ? contributions : JSON.parse(contributions) ,
@@ -40,6 +41,7 @@ exports.createOurSponsors = async (req, res) => {
       service,
       business_service,
       degree_program,
+      company
     });
 
     await newOurSponsors.save();
@@ -61,7 +63,7 @@ exports.createOurSponsors = async (req, res) => {
 
 exports.getAllOurSponsors = async (req, res) => {
     try {
-      const ourSponsors = await OurSponsors.find().populate('service').populate('business_service').populate("degree_program");
+      const ourSponsors = await OurSponsors.find().populate('service').populate('business_service').populate("degree_program").populate('company');
   
       const allOurSponsors = ourSponsors.map((sponsors) => {
         const ourSponsorsobj = sponsors.toObject();
@@ -86,7 +88,7 @@ exports.getAllOurSponsors = async (req, res) => {
       exports.getOurSponsorsById = async (req, res) => {
         const { id } = req.params;
         try {
-          const ourSponsors = await OurSponsors.findById(id).populate('service').populate('business_service').populate("degree_program");
+          const ourSponsors = await OurSponsors.findById(id).populate('service').populate('business_service').populate("degree_program").populate('company');
           if (!ourSponsors) {
             return res.status(404).json({ message: [{ key: 'error', value: 'Our Sponosrs not found' }] });
           }
@@ -107,13 +109,13 @@ exports.getAllOurSponsors = async (req, res) => {
       exports.updateOurSponsors = async (req, res) => {
         const { id } = req.params;
         const { 
-            company, 
+            companyName, 
             type, 
             category, 
             contributions, 
             service, 
             business_service, 
-            degree_program 
+            degree_program,company
         } = req.body;
         const logoFile = req.files?.logo;
       
@@ -158,14 +160,15 @@ exports.getAllOurSponsors = async (req, res) => {
             }
       
             // Update other fields
-            ourSponsors.company = company || ourSponsors.company;
+            ourSponsors.companyName = companyName || ourSponsors.companyName;
             ourSponsors.type = type || ourSponsors.type;
             ourSponsors.category = category || ourSponsors.category;
             ourSponsors.contributions = Array.isArray(contributions) ? contributions : JSON.parse(contributions || "[]"); // Ensure contributions is an array
             ourSponsors.service = service || ourSponsors.service;
             ourSponsors.business_service = business_service || ourSponsors.business_service;
             ourSponsors.degree_program = degree_program || ourSponsors.degree_program;
-      
+            ourSponsors.company = company || ourSponsors.company;
+
             await ourSponsors.save();
       
             return res.status(200).json({

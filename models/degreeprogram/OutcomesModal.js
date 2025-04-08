@@ -8,7 +8,7 @@ const OutcomesSchema = new mongoose.Schema({
     business_service: { type: mongoose.Schema.Types.ObjectId, ref: 'business_service' }, 
     degree_program: { type: mongoose.Schema.Types.ObjectId, ref: "Degree_Program"},
     college: { type: mongoose.Schema.Types.ObjectId, ref: "College",default:null},
-
+    company: { type: mongoose.Schema.Types.ObjectId, ref: "Company",default:null},
 //   lastModifiedBy: { type: String, required: true },
 //   lastModifiedOn: { type: Date, default: Date.now },
 });

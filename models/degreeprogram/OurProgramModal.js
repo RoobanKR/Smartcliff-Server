@@ -9,7 +9,7 @@ const ourProgramSchema = new mongoose.Schema({
     business_service: { type: mongoose.Schema.Types.ObjectId, ref: 'business_service', required: true }, 
     degree_program: { type: mongoose.Schema.Types.ObjectId, ref: "Degree_Program",required: true},
     college: { type: mongoose.Schema.Types.ObjectId, ref: "College",default:null},
-  
+    company: { type: mongoose.Schema.Types.ObjectId, ref: "Company",default:null},
 
 //   lastModifiedBy: { type: String, required: true },
 //   lastModifiedOn: { type: Date, default: Date.now },

@@ -12,6 +12,7 @@ const DegreeProgramSchema = new mongoose.Schema({
   service: { type: mongoose.Schema.Types.ObjectId, ref: "Services",required: true},
   business_service: { type: mongoose.Schema.Types.ObjectId, ref: 'business_service', required: true }, 
   college: [{ type: mongoose.Schema.Types.ObjectId, ref: "College",default:null}],
+  company: { type: mongoose.Schema.Types.ObjectId, ref: "Company",default:null},
 
 //   lastModifiedBy: { type: String, required: true },
 //   lastModifiedOn: { type: Date, default: Date.now },

@@ -11,35 +11,30 @@ exports.createCourse = async (req, res) => {
       category,
       objective,
       duration,
+      tool_software,
       mode_of_training,
       number_of_assessments,
       projects,
+      courseOutline,
+      courseSummary,
     } = req.body;
 
-    let course_level;
-    if (typeof req.body.course_level === "string") {
-      course_level = JSON.parse(req.body.course_level);
-    } else {
-      course_level = req.body.course_level;
-    }
-
+    // Validation for course name
     if (!course_name) {
-      return res
-        .status(400)
-        .json({
-          message: [{ key: "error", value: "Course name is required" }],
-        });
+      return res.status(400).json({
+        message: [{ key: "error", value: "Course name is required" }],
+      });
     }
 
+    // Check for existing course
     const existingCourse = await Course.findOne({ course_name });
     if (existingCourse) {
-      return res
-        .status(403)
-        .json({
-          message: [{ key: "error", value: "Course name already exists" }],
-        });
+      return res.status(403).json({
+        message: [{ key: "error", value: "Course name already exists" }],
+      });
     }
 
+    // Generate course ID
     const courseInitials = course_name
       .split(" ")
       .map((word) => word[0])
@@ -53,56 +48,44 @@ exports.createCourse = async (req, res) => {
     let newCourseId = `${courseInitials}001`;
     if (lastCourse && lastCourse.course_id) {
       const lastNumber = parseInt(lastCourse.course_id.match(/\d+$/)[0], 10);
-      newCourseId = `${courseInitials}${String(lastNumber + 1).padStart(
-        3,
-        "0"
-      )}`;
+      newCourseId = `${courseInitials}${String(lastNumber + 1).padStart(3, "0")}`;
     }
 
+    // Image upload validation
     if (!req.files || !req.files.image) {
-      return res
-        .status(400)
-        .json({ message: [{ key: "error", value: "Image is required" }] });
+      return res.status(400).json({ message: [{ key: "error", value: "Image is required" }] });
     }
 
     const imageFile = req.files.image;
     if (imageFile.size > 3 * 1024 * 1024) {
-      return res
-        .status(400)
-        .json({
-          message: [
-            { key: "error", value: "Image size exceeds the 3MB limit" },
-          ],
-        });
+      return res.status(400).json({
+        message: [{ key: "error", value: "Image size exceeds the 3MB limit" }],
+      });
     }
 
     const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-    const uploadPath = path.join(
-      __dirname,
-      "../uploads/courses/course",
-      uniqueFileName
-    );
+    const uploadPath = path.join(__dirname, "../uploads/courses/course", uniqueFileName);
     await imageFile.mv(uploadPath);
 
-    const formattedLevels = Array.isArray(course_level)
-      ? course_level.map((level) => ({
-          level: level.level,
-          duration: level.duration,
-          tool_software: Array.isArray(level.tool_software)
-            ? level.tool_software
-            : [level.tool_software],
-          lessons: Array.isArray(level.lessons)
-            ? level.lessons.map((lesson) => ({
-                title: lesson.title,
-                content: Array.isArray(lesson.content)
-                  ? lesson.content
-                  : [lesson.content],
-                duration: lesson.duration,
-              }))
-            : [],
-        }))
-      : [];
+    // Parse courseOutline
+    const parsedOutline = typeof courseOutline === "string" ? JSON.parse(courseOutline) : courseOutline;
+    
+    // Parse courseSummary and ensure it's properly formatted
+    let parsedSummary;
+    if (typeof courseSummary === "string") {
+      parsedSummary = JSON.parse(courseSummary);
+    } else {
+      parsedSummary = courseSummary;
+    }
+    
+    // Ensure parsedSummary is an array of objects with elements and hours
+    if (!Array.isArray(parsedSummary)) {
+      return res.status(400).json({
+        message: [{ key: "error", value: "Course summary must be an array" }],
+      });
+    }
 
+    // Create new course
     const newCourse = new Course({
       course_id: newCourseId,
       slug,
@@ -112,36 +95,30 @@ exports.createCourse = async (req, res) => {
       image: uniqueFileName,
       objective,
       duration,
+      tool_software: typeof tool_software === "string" ? JSON.parse(tool_software) : tool_software,
       mode_of_training,
       number_of_assessments,
       projects,
-      course_level: formattedLevels,
+      courseOutline: parsedOutline,
+      courseSummary: parsedSummary,
     });
 
     await newCourse.save();
-    return res
-      .status(201)
-      .json({
-        message: [{ key: "Success", value: "Course Added Successfully" }],
-      });
+    console.log("New course created:", newCourse);
+    return res.status(201).json({
+      message: [{ key: "Success", value: "Course Added Successfully" }],
+    });
   } catch (error) {
     console.error("Error:", error);
-    return res
-      .status(500)
-      .json({ message: [{ key: "error", value: "Internal server error" }] });
+    return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };
+
 
 exports.getAllCourses = async (req, res) => {
   try {
     const courses = await Course.find()
-      .populate("category")
-      .populate({
-        path: "course_level",
-        populate: [
-          { path: "tool_software" }
-        ],
-      });
+      .populate("category").populate('tool_software')
 
     const allCourses = courses.map((course) => {
       const serviceObj = course.toObject();
@@ -186,11 +163,7 @@ exports.getCourseById = async (req, res) => {
   try {
     const courseId = req.params.id;
     const course = await Course.findById(courseId)
-      .populate("category")
-      .populate({
-        path: "course_level",
-        populate: [{ path: "tool_software" }],
-      });
+      .populate("category").populate('tool_software')
 
     if (!course) {
       return res.status(404).json({ 
@@ -245,67 +218,53 @@ exports.updateCourseById = async (req, res) => {
       objective,
       duration,
       mode_of_training,
+      tool_software,
       number_of_assessments,
       projects,
+      courseOutline,
+      courseSummary,
     } = req.body;
-
-    let course_level;
-    if (typeof req.body.course_level === "string") {
-      course_level = JSON.parse(req.body.course_level);
-    } else {
-      course_level = req.body.course_level;
-    }
 
     const course = await Course.findById(courseId);
     if (!course) {
-      return res
-        .status(404)
-        .json({ message: [{ key: "error", value: "Course not found" }] });
+      return res.status(404).json({ message: [{ key: "error", value: "Course not found" }] });
     }
 
     const imageFile = req.files?.image;
     if (imageFile) {
+      // Delete the old image if it exists
       if (course.image) {
-        const imagePathToDelete = path.join(
-          __dirname,
-          "../uploads/courses/course",
-          course.image
-        );
+        const imagePathToDelete = path.join(__dirname, "../uploads/courses/course", course.image);
         if (fs.existsSync(imagePathToDelete)) {
           fs.unlinkSync(imagePathToDelete);
         }
       }
 
       const uniqueFileName = `${Date.now()}_${imageFile.name}`;
-      const uploadPath = path.join(
-        __dirname,
-        "../uploads/courses/course",
-        uniqueFileName
-      );
+      const uploadPath = path.join(__dirname, "../uploads/courses/course", uniqueFileName);
       await imageFile.mv(uploadPath);
-
-      course.image = uniqueFileName;
+      course.image = uniqueFileName; // Update the image path
     }
 
-    const formattedLevels = Array.isArray(course_level)
-      ? course_level.map((level) => ({
-          level: level.level,
-          duration: level.duration,
-          tool_software: Array.isArray(level.tool_software)
-            ? level.tool_software
-            : [level.tool_software],
-          lessons: Array.isArray(level.lessons)
-            ? level.lessons.map((lesson) => ({
-                title: lesson.title,
-                content: Array.isArray(lesson.content)
-                  ? lesson.content
-                  : [lesson.content],
-                duration: lesson.duration,
-              }))
-            : [],
-        }))
-      : [];
+    // Parse courseOutline
+    const parsedOutline = typeof courseOutline === "string" ? JSON.parse(courseOutline) : courseOutline;
 
+    // Parse courseSummary
+    let parsedSummary;
+    if (typeof courseSummary === "string") {
+      parsedSummary = JSON.parse(courseSummary);
+    } else {
+      parsedSummary = courseSummary;
+    }
+
+    // Ensure parsedSummary is an array of objects with elements and hours
+    if (!Array.isArray(parsedSummary)) {
+      return res.status(400).json({
+        message: [{ key: "error", value: "Course summary must be an array" }],
+      });
+    }
+
+    // Update course fields
     course.course_name = course_name;
     course.slug = slug;
     course.short_description = short_description;
@@ -315,23 +274,20 @@ exports.updateCourseById = async (req, res) => {
     course.mode_of_training = mode_of_training;
     course.number_of_assessments = number_of_assessments;
     course.projects = projects;
-    course.course_level = formattedLevels;
+    course.courseOutline = parsedOutline; // Update courseOutline
+    course.courseSummary = parsedSummary; // Update courseSummary
+    course.tool_software= typeof tool_software === "string" ? JSON.parse(tool_software) : tool_software,
 
     await course.save();
 
-    return res
-      .status(200)
-      .json({
-        message: [{ key: "SUCCESS", value: "Course updated successfully" }],
-      });
+    return res.status(200).json({
+      message: [{ key: "SUCCESS", value: "Course updated successfully" }],
+    });
   } catch (error) {
     console.error("Error updating course:", error);
-    return res
-      .status(500)
-      .json({ message: [{ key: "error", value: "Internal server error" }] });
+    return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };
-
 exports.deleteCourse = async (req, res) => {
   try {
     const id = req.params.id;
@@ -365,5 +321,31 @@ exports.deleteCourse = async (req, res) => {
     return res
       .status(500)
       .json({ message: [{ key: "error", value: "Internal server error" }] });
+  }
+};
+
+
+
+exports.toggleCourseOpenStatus = async (req, res) => {
+  try {
+    const courseId = req.params.id;
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+      return res.status(404).json({ message: [{ key: "error", value: "Course not found" }] });
+    }
+
+    // Toggle the isOpen status
+    course.isOpen = !course.isOpen;
+
+    await course.save(); // Save the updated course
+
+    return res.status(200).json({
+      message: [{ key: "SUCCESS", value: "Course status updated successfully" }],
+      course: { id: course._id, isOpen: course.isOpen }, // Return the updated status
+    });
+  } catch (error) {
+    console.error("Error updating course status:", error);
+    return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };

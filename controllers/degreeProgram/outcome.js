@@ -5,7 +5,7 @@ const fs = require('fs');
 
 exports.createOutcome = async (req, res) => {
   try {
-      const { title, service, business_service, college, degree_program } = req.body;
+      const { title, service, business_service, college, degree_program,company } = req.body;
 
       if (!title) {
           return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
@@ -35,7 +35,8 @@ exports.createOutcome = async (req, res) => {
           service,
           business_service,
           college,
-          degree_program
+          degree_program,
+          company
       });
 
       await newOutcome.save();
@@ -48,7 +49,7 @@ exports.createOutcome = async (req, res) => {
 };
 exports.getAllOutcome = async (req, res) => {
     try {
-      const outcome = await Outcome.find().populate("degree_program").populate('service').populate('business_service').populate('college');
+      const outcome = await Outcome.find().populate("degree_program").populate('service').populate('business_service').populate('college').populate('company');
   
       const allOutcomes = outcome.map((out) => {
         const outcomesObj = out.toObject();
@@ -72,7 +73,7 @@ exports.getAllOutcome = async (req, res) => {
   exports.getOutcomeById = async (req, res) => {
     const { id } = req.params;
     try {
-      const outcome = await Outcome.findById(id).populate("degree_program").populate('service').populate('business_service').populate('college');
+      const outcome = await Outcome.findById(id).populate("degree_program").populate('service').populate('business_service').populate('college').populate('company');
       if (!outcome) {
         return res.status(404).json({ message: [{ key: 'error', value: 'outcome not found' }] });
       }

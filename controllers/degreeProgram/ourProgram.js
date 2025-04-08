@@ -4,7 +4,7 @@ const fs = require('fs');
 
 exports.createOurProgram = async (req, res) => {
   try {
-      const { title, description, service,business_service,college,degree_program } = req.body;
+      const { title, description, service,business_service,college,degree_program,company } = req.body;
 
 
 
@@ -27,6 +27,7 @@ exports.createOurProgram = async (req, res) => {
           icon: uniqueFileName,
           service,business_service,college,
           degree_program,
+          company
       });
 
       await newOurProgram.save();
@@ -42,7 +43,7 @@ exports.createOurProgram = async (req, res) => {
 
 exports.getAllOurProgram = async (req, res) => {
     try {
-      const ourPrograms = await OurProgram.find().populate("degree_program").populate('service').populate('business_service').populate('college');
+      const ourPrograms = await OurProgram.find().populate("degree_program").populate('service').populate('business_service').populate('college').populate('company');
   
       const allOutcomes = ourPrograms.map((out) => {
         const outcomesObj = out.toObject();
@@ -66,7 +67,7 @@ exports.getAllOurProgram = async (req, res) => {
   exports.getOurProgramById = async (req, res) => {
     const { id } = req.params;
     try {
-      const ourPrograms = await OurProgram.findById(id).populate("degree_program").populate('service').populate('business_service').populate('college');
+      const ourPrograms = await OurProgram.findById(id).populate("degree_program").populate('service').populate('business_service').populate('college').populate('company');
       if (!ourPrograms) {
         return res.status(404).json({ message: [{ key: 'error', value: 'Our Program not found' }] });
       }
@@ -128,7 +129,7 @@ exports.getAllOurProgram = async (req, res) => {
       ourProgram.service = service;
       ourProgram.business_service = business_service;
       ourProgram.college = college;
-
+      ourProgram.company = company;
       ourProgram.degree_program = degree_program;
   
       await ourProgram.save();

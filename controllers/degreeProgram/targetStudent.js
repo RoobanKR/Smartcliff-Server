@@ -8,6 +8,7 @@ exports.createTargetStudent = async (req, res) => {
       description,
       bgColor,
       service,business_service,degree_program,
+      company
     } = req.body;
 
 
@@ -29,7 +30,7 @@ exports.createTargetStudent = async (req, res) => {
       description,
       bgColor,
       icon: uniqueFileName,
-      service,business_service,degree_program,
+      service,business_service,degree_program,company
     });
 
     await newProgramMentor.save();
@@ -48,7 +49,7 @@ exports.createTargetStudent = async (req, res) => {
 };
 exports.getAllTargetStudent = async (req, res) => {
     try {
-         const targetstudent = await TargetStudent.find().populate("degree_program").populate('service').populate('business_service');
+         const targetstudent = await TargetStudent.find().populate("degree_program").populate('service').populate('business_service').populate('company');
      
          const alltargetSTudent = targetstudent.map((student) => {
            const targetStudentObj = student.toObject();
@@ -73,7 +74,7 @@ exports.getAllTargetStudent = async (req, res) => {
   exports.getTargetStudentById = async (req, res) => {
     const { id } = req.params;
        try {
-         const targetstudent = await TargetStudent.findById(id).populate("degree_program").populate('service').populate('business_service');
+         const targetstudent = await TargetStudent.findById(id).populate("degree_program").populate('service').populate('business_service').populate('company');
          if (!targetstudent) {
            return res.status(404).json({ message: [{ key: 'error', value: 'Our Program not found' }] });
          }
