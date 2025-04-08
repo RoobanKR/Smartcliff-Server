@@ -4,10 +4,10 @@ const fs = require('fs');
 
 exports.createOurPartners = async (req, res) => {
   try {
-      const { company,websiteLink,service,business_service, degree_program } = req.body;
+      const { companyName,websiteLink,type,service,business_service, degree_program,company } = req.body;
 
 
-      if (!company) {
+      if (!companyName) {
           return res.status(400).json({ message: [{ key: "error", value: "Required fields" }] });
       }
 
@@ -25,12 +25,14 @@ exports.createOurPartners = async (req, res) => {
            await imageFile.mv(uploadPath);
    
       const newOurPartners = new OurPartners({
-          company,
+          companyName,
           websiteLink,
           image: uniqueFileName,
           service,
           business_service,
           degree_program,
+          type,
+          company
       });
 
       await newOurPartners.save();
@@ -46,7 +48,7 @@ exports.createOurPartners = async (req, res) => {
 
 exports.getAllOurPartners = async (req, res) => {
     try {
-      const ourPartners = await OurPartners.find().populate('service').populate('business_service').populate("degree_program");
+      const ourPartners = await OurPartners.find().populate('service').populate('business_service').populate("degree_program").populate('company');
   
       const AllOurPartners = ourPartners.map((partners) => {
         const outPartnersObj = partners.toObject();
@@ -72,7 +74,7 @@ exports.getAllOurPartners = async (req, res) => {
     exports.getOurPartnersById = async (req, res) => {
       const { id } = req.params;
       try {
-        const outPartners = await OurPartners.findById(id).populate('service').populate('business_service').populate("degree_program");
+        const outPartners = await OurPartners.findById(id).populate('service').populate('business_service').populate("degree_program").populate('company');
         if (!outPartners) {
           return res.status(404).json({ message: [{ key: 'error', value: 'Our Partners not found' }] });
         }
@@ -93,7 +95,7 @@ exports.getAllOurPartners = async (req, res) => {
 
     exports.updateOurPartners = async (req, res) => {
         const { id } = req.params;
-        const { company, service, websiteLink, business_service, degree_program } = req.body;
+        const { companyName, service, websiteLink,type, business_service, degree_program,company } = req.body;
         const newImageFile = req.files?.image;
     
         try {
@@ -130,12 +132,15 @@ exports.getAllOurPartners = async (req, res) => {
             }
     
             // Update other fields
-            ourPartner.company = company || ourPartner.company;
+            ourPartner.companyName = companyName || ourPartner.companyName;
+            ourPartner.type = type || ourPartner.type;
+
             ourPartner.websiteLink = websiteLink || ourPartner.websiteLink;
             ourPartner.service = service || ourPartner.service;
             ourPartner.business_service = business_service || ourPartner.business_service;
             ourPartner.degree_program = degree_program || ourPartner.degree_program;
-    
+            ourPartner.company = company || ourPartner.company;
+
             await ourPartner.save();
     
             return res.status(200).json({
@@ -149,7 +154,6 @@ exports.getAllOurPartners = async (req, res) => {
             });
         }
     };
-    
     
     
     exports.deleteOurPartners = async (req, res) => {

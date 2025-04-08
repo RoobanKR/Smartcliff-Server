@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
 
 const ourPartnersSchema = new mongoose.Schema({
-  company: { type: String, required: true },
+  companyName: { type: String, required: true },
+  type: { type: String, required: true },
+
   image: {type: String,required:true,max: 3 * 1024 * 1024},
   websiteLink: { type: String, required: true },
 
@@ -10,6 +12,7 @@ const ourPartnersSchema = new mongoose.Schema({
   business_service: { type: mongoose.Schema.Types.ObjectId, ref: 'business_service', required: true }, 
   
   degree_program: { type: mongoose.Schema.Types.ObjectId, ref: "Degree_Program",required: true},
+    company: { type: mongoose.Schema.Types.ObjectId, ref: "Company",default:null},
 
 //   lastModifiedBy: { type: String, required: true },
 //   lastModifiedOn: { type: Date, default: Date.now },

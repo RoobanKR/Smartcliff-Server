@@ -104,7 +104,6 @@ exports.createCourse = async (req, res) => {
     });
 
     await newCourse.save();
-    console.log("New course created:", newCourse);
     return res.status(201).json({
       message: [{ key: "Success", value: "Course Added Successfully" }],
     });
@@ -117,30 +116,39 @@ exports.createCourse = async (req, res) => {
 
 exports.getAllCourses = async (req, res) => {
   try {
+    // Populate both category and tool_software
     const courses = await Course.find()
-      .populate("category").populate('tool_software')
+      .populate("category")
+      .populate('tool_software');
 
     const allCourses = courses.map((course) => {
       const serviceObj = course.toObject();
 
-      // Modify the image URL for the course (only if not already a full URL)
+      // Modify the image URL for the course
       if (serviceObj.image && !serviceObj.image.startsWith('http')) {
         serviceObj.image = process.env.BACKEND_URL + "/uploads/courses/course/" + serviceObj.image;
+      }
+
+      // Format tool_software images at the top level
+      if (serviceObj.tool_software && serviceObj.tool_software.length > 0) {
+        serviceObj.tool_software.forEach(tool => {
+          if (tool.image && !tool.image.startsWith('http')) {
+            tool.image = process.env.BACKEND_URL + "/uploads/courses/toolsoftware/" + tool.image;
+          }
+        });
       }
 
       // Process course levels
       if (serviceObj.course_level) {
         serviceObj.course_level.forEach((level) => {
-          // Modify tool_software image URLs
+          // Modify tool_software image URLs in course levels
           if (level.tool_software) {
             level.tool_software.forEach((tool) => {
-              // Only add base URL if image doesn't already start with http
               if (tool.image && !tool.image.startsWith('http')) {
                 tool.image = process.env.BACKEND_URL + "/uploads/courses/toolsoftware/" + tool.image;
               }
             });
           }
-
         });
       }
 
@@ -163,7 +171,8 @@ exports.getCourseById = async (req, res) => {
   try {
     const courseId = req.params.id;
     const course = await Course.findById(courseId)
-      .populate("category").populate('tool_software')
+      .populate("category")
+      .populate('tool_software');
 
     if (!course) {
       return res.status(404).json({ 
@@ -178,17 +187,25 @@ exports.getCourseById = async (req, res) => {
       courseObj.image = process.env.BACKEND_URL + "/uploads/courses/course/" + courseObj.image;
     }
 
+    // Format tool_software images at the top level
+    if (courseObj.tool_software && courseObj.tool_software.length > 0) {
+      courseObj.tool_software.forEach(tool => {
+        if (tool.image && !tool.image.startsWith('http')) {
+          tool.image = process.env.BACKEND_URL + "/uploads/courses/toolsoftware/" + tool.image;
+        }
+      });
+    }
+
+    // Process course levels
     if (courseObj.course_level) {
       courseObj.course_level.forEach((level) => {
         if (level.tool_software) {
           level.tool_software.forEach((tool) => {
-            // Only add base URL if image doesn't already start with http
             if (tool.image && !tool.image.startsWith('http')) {
               tool.image = process.env.BACKEND_URL + "/uploads/courses/toolsoftware/" + tool.image;
             }
           });
         }
-
       });
     }
 
@@ -205,7 +222,6 @@ exports.getCourseById = async (req, res) => {
     });
   }
 };
-
 
 exports.updateCourseById = async (req, res) => {
   try {

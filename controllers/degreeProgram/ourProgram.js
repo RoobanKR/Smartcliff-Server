@@ -90,7 +90,7 @@ exports.getAllOurProgram = async (req, res) => {
   exports.updateOurProgram = async (req, res) => {
     try {
       const { id } = req.params;
-      const { title, description, degree_program } = req.body;
+      const { title, description,service,business_service,college,company, degree_program } = req.body;
       const newIconFile = req.files?.icon;
   
       const ourProgram = await OurProgram.findById(id);
