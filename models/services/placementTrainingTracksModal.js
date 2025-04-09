@@ -16,6 +16,27 @@ const ModuleSchema = new mongoose.Schema({
     }
   });
   
+  const summarySchema = new mongoose.Schema({
+    moduleLevel: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    TrainingInHours: {
+      type: Number,
+      required: true
+    },
+    TrainingInDays: {
+      type: Number,
+      required: true
+    },
+    remarks: {
+      type: String,
+      required: true
+    }
+  });
+
+  
   const TrainingModuleSchema = new mongoose.Schema({
     modules: [ModuleSchema]
   });
@@ -43,6 +64,8 @@ const ModuleSchema = new mongoose.Schema({
       required: true
     },
     trainingModuleLevels: [TrainingModuleSchema],
+    trainingModuleSummary: [summarySchema],
+
       business_service: { type: mongoose.Schema.Types.ObjectId, ref: 'business_service', required: true }, 
       service: { type: mongoose.Schema.Types.ObjectId, ref: "Services"},
     

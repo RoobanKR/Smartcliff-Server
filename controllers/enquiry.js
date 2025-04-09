@@ -4,11 +4,7 @@ const { sendEmail } = require("../utils/sendEmail");
 
 exports.submitEnquiry = async (req, res) => {
     try {
-        const { name, email, phone,  business_service, service, message } = req.body;
-
-        if (!name || !email || !phone || !business_service || !service || !message) {
-            return res.status(400).json({ error: "All fields are required" });
-        }
+        const { name, email, phone,  category, courses, message } = req.body;
 
         const existingEmail = await Enquiry.findOne({ email });
         if (existingEmail) {
@@ -19,21 +15,21 @@ exports.submitEnquiry = async (req, res) => {
             name,
             email,
             phone,
-            business_service,
-            service,
+            category,
+            courses,
             message,
         });
 
         await newEnquiry.save();
 
         const enquiry = await Enquiry.findById(newEnquiry._id)
-            .populate("business_service")
-            .populate("service");
+            .populate("category")
+            .populate("courses");
 
-        const businessServiceName = enquiry.business_service ? enquiry.business_service.title : "N/A";
-        const serviceName = enquiry.service ? enquiry.service.title : "N/A";
+        const categoryName = enquiry.category ? enquiry.category.category_name : "N/A";
+        const coursesName = enquiry.courses ? enquiry.courses.course_name : "N/A";
 
-        const userSubject = `Thank You for Your Enquiry - ${businessServiceName}`;
+        const userSubject = `Thank You for Your Enquiry - ${categoryName}`;
         const userBody = `
             <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -56,11 +52,11 @@ exports.submitEnquiry = async (req, res) => {
                     </tr>
                     <tr>
                         <td style="padding: 8px; border: 1px solid #ddd;"><strong>Business Service:</strong></td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">${businessServiceName}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${categoryName}</td>
                     </tr>
                     <tr>
                         <td style="padding: 8px; border: 1px solid #ddd;"><strong>Service:</strong></td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">${serviceName}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${coursesName}</td>
                     </tr>
                 </table>
 
@@ -74,7 +70,7 @@ exports.submitEnquiry = async (req, res) => {
 
 
         const adminEmail = process.env.ADMIN_EMAIL;
-        const adminSubject = `New Enquiry Received - ${businessServiceName}`;
+        const adminSubject = `New Enquiry Received - ${categoryName}`;
         const adminBody = `
             <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
@@ -96,11 +92,11 @@ exports.submitEnquiry = async (req, res) => {
                     </tr>
                     <tr>
                         <td style="padding: 8px; border: 1px solid #ddd;"><strong>Business Service:</strong></td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">${businessServiceName}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${categoryName}</td>
                     </tr>
                     <tr>
                         <td style="padding: 8px; border: 1px solid #ddd;"><strong>Service:</strong></td>
-                        <td style="padding: 8px; border: 1px solid #ddd;">${serviceName}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${coursesName}</td>
                     </tr>
                     <tr>
                         <td style="padding: 8px; border: 1px solid #ddd;"><strong>Message:</strong></td>
@@ -130,8 +126,8 @@ exports.submitEnquiry = async (req, res) => {
 exports.getAllEnquiries = async (req, res) => {
     try {
         const enquiries = await Enquiry.find()
-        .populate("business_service")
-        .populate("service").sort({ createdAt: -1 });
+        .populate("category")
+        .populate("courses").sort({ createdAt: -1 });
 
             return res.status(200).json({
                 message: [{ key: "success", value: "enquiry getted" }],
@@ -147,7 +143,7 @@ exports.getAllEnquiries = async (req, res) => {
 exports.getEnquiryById = async (req, res) => {
     try {
         const { id } = req.params;
-        const enquiry = await Enquiry.findById(id).populate("business_service").populate("service");
+        const enquiry = await Enquiry.findById(id).populate("category").populate("courses");
 
         if (!enquiry) {
             return res.status(404).json({ error: "Enquiry not found" });

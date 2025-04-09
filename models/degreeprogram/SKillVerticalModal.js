@@ -9,7 +9,7 @@ const SkillVerticalSchema = new mongoose.Schema({
   prerequisites: [{ type: String }],
   coreSubjects: [{ type: String }],
 });
-
+  
 // Define the main schema for skills
 const skillSchema = new mongoose.Schema({
   programName: { type: String, default: 'Industry Driven MCA Program' },

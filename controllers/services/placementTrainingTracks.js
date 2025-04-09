@@ -9,6 +9,7 @@ exports.createPlacementTrainingTrack = async (req, res) => {
       targetSemester,
       objecttive,
       trainingModuleLevels,
+      trainingModuleSummary,
       business_service,
       service
     } = req.body;
@@ -21,6 +22,7 @@ exports.createPlacementTrainingTrack = async (req, res) => {
       targetSemester,
       objecttive,
       trainingModuleLevels,
+      trainingModuleSummary,
       business_service,
       service,
       createdBy: req.user ? req.user.id : 'system',
