@@ -636,7 +636,7 @@ module.exports.registerAdmin = async (req, res) => {
     // Send email to the admin with registration details
     const emailSubject = "Your New Admin Password";
     const emailBody = `
-    <p><strong>Welcome to the MEDTOUR</strong></p>
+    <p><strong>Welcome to the Smartcliff</strong></p>
     <p>You have been added as an admin:</p>
     <p><strong>Admin Email:</strong> ${email}</p>
     <p><strong>Password:</strong> ${password}</p>
