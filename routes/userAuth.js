@@ -34,7 +34,7 @@ const { userRole } = require('../middlewares/userRole.js')
 router.post('/SignUp', SignUp)
 router.post('/SignIn', SignIn)
 router.post('/Logout',userAuth, Logout)
-router.get('/getUser',userAuth,userRole(['admin', 'super_admin']), getUsers)
+router.get('/getUsers',userAuth,userRole(['admin', 'super_admin']), getUsers)
 router.get('/getUserById/:id',userAuth, getUserById)
 
 router.put('/updateUser/:userId', updateUser);
@@ -50,7 +50,7 @@ router.get('/userVerify', userAuth, userVerify) // for testing only
 
 // Admin
 
-router.post('/create/admin',registerAdmin);
+router.post('/create/admin',userAuth,userRole('super_admin'),registerAdmin);
 router.put('/update/admin/:adminId',userAuth,userRole('super_admin'),updateAdmin);
 router.delete('/delete/admin/:id',userAuth,userRole('super_admin'),deleteAdminById);
 

@@ -6,7 +6,7 @@ const aboutusSchema = new mongoose.Schema({
   
   createdBy: { type: String, required: true },
   createdOn: { type: Date, default: Date.now },
-  updatedBy: { type: String, required: true },
+  updatedBy: { type: String},
   updatedOn: { type: Date, default: Date.now },
 
 

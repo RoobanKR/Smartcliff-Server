@@ -245,21 +245,33 @@ module.exports.updateUser = async (req, res) => {
 
 exports.getUsers = async (req, res) => {
   try {
-    const Users = await User.find();
-    if (!Users || Users.length === 0) {
+    const users = await User.find();
+
+    if (!users || users.length === 0) {
       console.error("No users found");
       return res.status(404).json({ message: "No users found" });
     }
-    console.log("Users fetched successfully:", Users);
+
+    const formattedUsers = users.map(user => {
+      const userObj = user.toObject();
+      return {
+        ...userObj,
+        profile_pic: userObj.profile_pic 
+          ? process.env.BACKEND_URL + "/uploads/user/profile/" + userObj.profile_pic
+          : null, // or a default image URL if needed
+      };
+    });
+
+
     res.status(200).json({
       message: [{ key: "success", value: "User section get All data" }],
-      Users: Users,
+      Users: formattedUsers,
     });
   } catch (error) {
     console.log("Error fetching users:", error);
-    res
-      .status(500)
-      .json({ message: [{ key: "error", value: "Internal server error" }] });
+    res.status(500).json({
+      message: [{ key: "error", value: "Internal server error" }],
+    });
   }
 };
 
@@ -278,8 +290,12 @@ exports.getUserById = async (req, res) => {
       message: [
         { key: "success", value: "User section Id based get the data" },
       ],
-      user: user,
-    });
+      user: {
+        ...user.toObject(),
+        profile_pic: user.profile_pic
+          ? process.env.BACKEND_URL + "/uploads/user/profile/" + user.profile_pic
+          : null,
+      },    });
   } catch (error) {
     res
       .status(500)
@@ -601,6 +617,12 @@ module.exports.registerAdmin = async (req, res) => {
     }
 
     // Assuming you're also receiving a profile picture file in the request
+    if (!req.files || !req.files.profile_pic) {
+      return res.status(400).json({
+        message: [{ key: "error", value: "Profile picture is required" }],
+      });
+    }
+
     const profileFile = req.files.profile_pic;
 
     if (profileFile.size > 3 * 1024 * 1024) {
@@ -616,6 +638,7 @@ module.exports.registerAdmin = async (req, res) => {
       uniqueFileName
     );
 
+    // Move the file to the upload directory
     await profileFile.mv(uploadPath);
 
     const admin = await User.create({
@@ -698,7 +721,7 @@ module.exports.updateAdmin = async (req, res) => {
       if (existingAdmin.profile_pic) {
         try {
           fs.unlinkSync(
-            path.join(__dirname, "../uploads/admin", existingAdmin.profile_pic)
+            path.join(__dirname, "../uploads/user/profile", existingAdmin.profile_pic)
           );
         } catch (err) {
           console.error("Error removing existing profile picture file:", err);
@@ -709,7 +732,7 @@ module.exports.updateAdmin = async (req, res) => {
       const uniqueFileName = `${Date.now()}_${profilePicFile.name}`;
       const uploadPath = path.join(
         __dirname,
-        "../uploads/admin",
+        "../uploads/user/profile",
         uniqueFileName
       );
 

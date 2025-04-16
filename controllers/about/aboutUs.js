@@ -149,7 +149,7 @@ exports.editAboutusById = async (req, res) => {
     }
 
     // **Update `updatedBy` and `updatedOn`**
-    updatedData.updatedBy = req.user.email || "roobankr6@gmail.com"; 
+    updatedData.updatedBy = req?.user?.email || "roobankr5@gmail.com"; 
     updatedData.updatedOn = new Date();
 
     const updatedAboutUs = await AboutUs.findByIdAndUpdate(
