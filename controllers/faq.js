@@ -2,26 +2,26 @@ const Faq = require("../models/faqModal");
  
 exports.createFaq = async (req, res) => {
   try {
-    const { faqItems,type, course, college, degree_program, service, business_service } = req.body;
-
+    const { faqItems, type, course, college, degree_program, service, business_service } = req.body;
+ 
     if (!faqItems || !Array.isArray(faqItems) || faqItems.length === 0) {
       return res
         .status(400)
         .json({ message: [{ key: "error", value: "FAQ items are required" }] });
     }
-
+ 
     // Validate each FAQ item
     const isValidFaqItems = faqItems.every((item) => item.question && item.answer);
-
+ 
     if (!isValidFaqItems) {
       return res
         .status(400)
         .json({ message: [{ key: "error", value: "Invalid FAQ items" }] });
     }
-
+ 
     // Determine category_name based on provided values
-    const category_name = type || course || degree_program || college|| business_service || service ? "non-common" : "common";
-
+    const category_name = type || course || degree_program || college || business_service || service ? "non-common" : "common";
+ 
     // Create a Faq object
     const newFaq = new Faq({
       faqItems,
@@ -33,10 +33,10 @@ exports.createFaq = async (req, res) => {
       business_service: business_service || null,
       category_name,
     });
-
+ 
     // Save the Faq object
     await newFaq.save();
-
+ 
     return res.status(201).json({
       message: [{ key: "Success", value: "FAQs Added Successfully" }],
     });
@@ -47,11 +47,11 @@ exports.createFaq = async (req, res) => {
     });
   }
 };
-
+ 
  
 exports.getAllFaq = async (req, res) => {
   try {
-    const allFaq = await Faq.find().populate("course").populate('business_service').populate('service');
+    const allFaq = await Faq.find().populate("course").populate('business_service').populate('service').populate('college');
     res.status(200).json({
       message: [{ key: "success", value: "FAQ section get All data" }],
       FAQ: allFaq,
@@ -67,7 +67,7 @@ exports.getFaqById = async (req, res) => {
   const { id } = req.params;
  
   try {
-    const FAQ = await Faq.findById(id).populate('business_service').populate('service').populate("course");
+    const FAQ = await Faq.findById(id).populate('business_service').populate('service').populate("course").populate("degree_program").populate("business_service").populate('college');
     if (!FAQ) {
       return res
         .status(404)
@@ -87,17 +87,47 @@ exports.getFaqById = async (req, res) => {
   }
 };
  
+ 
 exports.updateFaq = async (req, res) => {
   const { id } = req.params;
-  const { question, answer } = req.body;
+  const { faqItems, type, course, college, degree_program, service, business_service, category_name } = req.body;
  
   try {
-    const updatedFaq = await Faq.findByIdAndUpdate(id, {
-      question,
-      answer,
-      lastModifiedBy: req.user.email,
+    // Basic validation
+    if (!faqItems || !Array.isArray(faqItems) || faqItems.length === 0) {
+      return res
+        .status(400)
+        .json({ message: [{ key: "error", value: "FAQ items are required" }] });
+    }
+ 
+    // Validate each FAQ item
+    const isValidFaqItems = faqItems.every((item) => item.question && item.answer);
+ 
+    if (!isValidFaqItems) {
+      return res
+        .status(400)
+        .json({ message: [{ key: "error", value: "Invalid FAQ items" }] });
+    }
+ 
+    // Create update object
+    const updateData = {
+      faqItems,
+      type: type || null,
+      course: course || null,
+      college: college || null,
+      degree_program: degree_program || null,
+      service: service || null,
+      business_service: business_service || null,
+      category_name: category_name || "common",
       lastModifiedOn: new Date(),
-    });
+    };
+ 
+    // Add lastModifiedBy if user info is available
+    if (req.user?.email) {
+      updateData.lastModifiedBy = req.user.email;
+    }
+ 
+    const updatedFaq = await Faq.findByIdAndUpdate(id, updateData, { new: true });
  
     if (!updatedFaq) {
       return res
@@ -107,13 +137,16 @@ exports.updateFaq = async (req, res) => {
  
     return res.status(200).json({
       message: [{ key: "success", value: "FAQ section Update Successfully" }],
+      updatedFaq,
     });
   } catch (error) {
+    console.error("Error updating FAQ:", error);
     res
       .status(500)
       .json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };
+ 
  
 exports.deleteFaq = async (req, res) => {
   try {
@@ -149,3 +182,4 @@ exports.deleteFaq = async (req, res) => {
       .json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };
+ 
