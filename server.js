@@ -99,8 +99,8 @@ app.use(
     origin: [
       // "http://localhost:3000",
       "https://smartcliff.academy",
-      "https://smart-cliff-admin.vercel.app",
       // "http://localhost:3535",
+      "https://smart-cliff-admin.vercel.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,

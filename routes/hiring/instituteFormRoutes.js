@@ -2,14 +2,16 @@ const express = require('express');
 const router = express.Router();
 const { userAuth } = require('../../middlewares/userAuth.js');
 const { userRole } = require('../../middlewares/userRole.js');
-const { createInstituteForm } = require('../../controllers/hiring/instituteForm.js');
+const { createInstituteForm, getAllInstituteFormApplications, getInstituteFormById, sendResponseEmailInstituteForm, deleteInstitute } = require('../../controllers/hiring/instituteForm.js');
 
 router.post('/create/institute',createInstituteForm);
 
-// router.get('/getAll/hire_from_us', getAllHireFromUs);
+router.get('/getAll/institute', getAllInstituteFormApplications);
 
-// router.get('/getById/hire_from_us/:id', getHireFromUsById);
+router.get('/getById/institute/:id', getInstituteFormById);
 
-// router.delete('/delete/hire_from_us/:id',deleteHireFromUs);
+router.delete('/delete/institute/:id',deleteInstitute);
+
+router.post('/institute/response-mail/applicants',sendResponseEmailInstituteForm);
 
 module.exports = router;    

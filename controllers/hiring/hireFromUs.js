@@ -19,7 +19,8 @@ exports.createHireFromUs = async (req, res) => {
           });
       }
 
-      const newHiringApply = new HireFromUs({ name, company_name, mobile, email, enquiry, skillsetRequirements });
+      const newHiringApply = new HireFromUs({ name, company_name, mobile, email, enquiry, skillsetRequirements,createdAt: new Date(),
+      });
 
       await newHiringApply.save();
 
@@ -70,39 +71,109 @@ exports.createHireFromUs = async (req, res) => {
 
 exports.sendResponseEmailhireFromUs = async (req, res) => {
   try {
-    const { email, response } = req.body;
+    const { subject, message, applicationIds } = req.body;
 
-
-    const receiverEmail = email;
-    const receiverSubject = "Response to your job application";
-    const receiverBody = `
-      <p>Hello,</p>
-      <p>Thank you for your job application. Here is our response:</p>
-      <p>${response}</p>
-      <p>Best regards,</p>
-      <p>SmartCliff</p>
-    `;
-
-    // Call the sendEmail function to send the response email
-    const responseEmailSent = await sendEmail(receiverEmail, receiverSubject, receiverBody);
-
-    if (responseEmailSent) {
-      return res.status(200).json({ message: "Response email sent successfully" });
-    } else {
-      console.error("Error sending response email");
-      return res.status(500).json({ message: "Error sending response email" });
+    if (!subject || !message) {
+      return res.status(400).json({
+        message: [{ key: "error", value: "Subject and message are required" }],
+      });
     }
+
+    if (!applicationIds || !Array.isArray(applicationIds) || applicationIds.length === 0) {
+      return res.status(400).json({
+        message: [{ key: "error", value: "At least one application ID is required" }],
+      });
+    }
+
+    const applicants = await HireFromUs.find({ _id: { $in: applicationIds } });
+
+    if (applicants.length === 0) {
+      return res.status(404).json({
+        message: [{ key: "error", value: "No applicants found with the provided IDs" }],
+      });
+    }
+
+    const results = {
+      success: [],
+      failed: []
+    };
+
+    for (const applicant of applicants) {
+      try {
+        const emailBody = `
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; color: #333; background-color: #f4f4f4; padding: 20px; }
+              .container { max-width: 600px; background: #fff; padding: 20px; margin: 0 auto; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+              h2 { color: #0056b3; text-align: center; }
+              .content { font-size: 16px; color: #555; line-height: 1.6; }
+              .footer { text-align: center; margin-top: 20px; font-size: 14px; color: #777; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h2>${subject}</h2>
+              <div class="content">
+                <p>Dear ${applicant.name},</p>
+                ${message}
+              </div>
+              <div class="footer">
+                <p><strong>SmartCliff</strong> | https://smartcliff.academy/</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `;
+
+        await sendEmail(applicant.email, subject, emailBody);
+        results.success.push({
+          id: applicant._id,
+          name: applicant.name,
+          email: applicant.email,
+          status: 'Success' // Store success status
+        });
+
+        // Store email subject and body in the applicant's record
+        applicant.responseEmails.push({ 
+          from: req?.user?.email || process.env.NODEMAILER_FORM_EMAIL,
+          to: applicant.email, 
+          name: applicant.name, 
+          subject, 
+          body: message,
+          status: 'Success' // Store status in responseEmails
+        });
+        await applicant.save();
+      } catch (error) {
+        console.error(`Failed to send email to ${applicant.email}:`, error);
+        results.failed.push({
+          id: applicant._id,
+          name: applicant.name,
+          email: applicant.email,
+          error: error.message,
+          status: 'Failed' // Store failed status
+        });
+      }
+    }
+
+    return res.status(200).json({
+      message: [{ 
+        key: "success", 
+        value: `Emails sent successfully to ${results.success.length} applicants${results.failed.length > 0 ? `, failed for ${results.failed.length} applicants` : ''}`
+      }],
+      results
+    });
   } catch (error) {
-    console.error("Error sending response email:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("Send Email Error:", error);
+    return res.status(500).json({
+      message: [{ key: "error", value: "Internal server error" }],
+    });
   }
 };
 
-
-
 exports.getAllHireFromUs = async (req, res) => {
   try {
-    const hiringApplications = await HireFromUs.find().populate("course");
+    const hiringApplications = await HireFromUs.find();
 
     return res.status(200).json({
       message: [
@@ -130,7 +201,7 @@ exports.getHireFromUsById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const hiringApplication = await HireFromUs.findById(id).populate("course");
+    const hiringApplication = await HireFromUs.findById(id);
 
     if (!hiringApplication) {
       return res.status(404).json({

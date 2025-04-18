@@ -8,11 +8,11 @@ router.post('/create/hire_from_us',createHireFromUs);
 
 router.post('/response_mail/hire_from_us',sendResponseEmailhireFromUs);
 
-
 router.get('/getAll/hire_from_us', getAllHireFromUs);
 
 router.get('/getById/hire_from_us/:id', getHireFromUsById);
 
 router.delete('/delete/hire_from_us/:id',deleteHireFromUs);
+router.post('/hire-from-us/response-mail/applicants',sendResponseEmailhireFromUs);
 
 module.exports = router;    

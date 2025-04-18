@@ -1,5 +1,5 @@
 const express = require('express');
-const { createCareerForm, getAllCareersForm, getCareerFormById, deleteCareerForm, updateCareerForm } = require('../controllers/careerForm');
+const { createCareerForm, getAllCareersForm, getCareerFormById, deleteCareerForm, updateCareerForm, sendEmailToApplicants } = require('../controllers/careerForm');
 const router = express.Router();
 
 router.post('/create/career-form',createCareerForm);
@@ -11,5 +11,7 @@ router.get('/getById/career-form/:id', getCareerFormById);
 router.delete('/delete/career-form/:id',deleteCareerForm);
 
 router.put('/update/career-form/:id', updateCareerForm);
+
+router.post('/response-mail-send/applicants',sendEmailToApplicants);
 
 module.exports = router;    

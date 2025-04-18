@@ -29,6 +29,23 @@ const trainFromUsSchema = new mongoose.Schema({
   
  
   skillsetRequirements: { type: [skillSchema] },
+  enquiry: {
+    type: String,
+    required: true,
+  },
+  createdAt: { type: Date },
+
+  responseEmails: [{
+    from: { type: String, },
+    to: { type: String, },
+
+    name: { type: String, },
+    subject: { type: String, },
+    body: { type: String, },
+    sentOn: { type: Date, default: Date.now },
+    status: { type: String, },
+
+  }]
 
 });
 
