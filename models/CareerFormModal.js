@@ -15,7 +15,6 @@ const careerSchema = new mongoose.Schema({
   responseEmails: [{
     from: { type: String, },
     to: { type: String, },
-
     name: { type: String, },
     subject: { type: String, },
     body: { type: String, },

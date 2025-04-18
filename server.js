@@ -38,7 +38,7 @@ const ourPartnersRoutes = require("./routes/degreeProgram/ourPartnersRoutes");
 const ourSponosrsRoutes = require("./routes/degreeProgram/ourSponosorsRoutes");
 const collegeRoutes = require("./routes/degreeProgram/collegeRoutes");
 const certificationRoutes = require("./routes/degreeProgram/certificationRoutes");
-
+const footerRoutes = require("./routes/footerRoutes")
 // services
 
 const businessServicesRoutes = require("./routes/services/businessServicesRoutes");
@@ -161,6 +161,8 @@ app.use("/",certificationRoutes)
 app.use("/",companyRoutes)
 
 app.use("/",skillVerticalRoutes)
+
+app.use("/",footerRoutes);
 
 // home
 app.use("/", homeServicesRoutes)
