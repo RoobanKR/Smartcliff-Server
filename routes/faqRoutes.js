@@ -11,8 +11,8 @@ router.get('/getAll/faq', getAllFaq);
 
 router.get('/faq/getById/:id', getFaqById);
 
-router.delete('/faq/delete/:id',userAuth,userRole(['admin', 'super_admin']), deleteFaq);
+router.delete('/faq/delete/:id',deleteFaq);
 
-router.put('/faq/edit/:id',userAuth,userRole(['admin', 'super_admin']), updateFaq);
+router.put('/faq/edit/:id', updateFaq);
 
 module.exports = router;
