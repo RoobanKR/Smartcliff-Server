@@ -38,7 +38,10 @@ const ourPartnersRoutes = require("./routes/degreeProgram/ourPartnersRoutes");
 const ourSponosrsRoutes = require("./routes/degreeProgram/ourSponosorsRoutes");
 const collegeRoutes = require("./routes/degreeProgram/collegeRoutes");
 const certificationRoutes = require("./routes/degreeProgram/certificationRoutes");
-const footerRoutes = require("./routes/footerRoutes")
+const footerRoutes = require("./routes/footerRoutes");
+const popUpRoutes = require("./routes/home/popupNotificationRoutes")
+const contactPageRoutes = require("./routes/contactPageRoutes")
+
 // services
 
 const businessServicesRoutes = require("./routes/services/businessServicesRoutes");
@@ -84,6 +87,7 @@ const shineRoutes = require("./routes/about/shineRoutes");
 const yearlyServicesRoutes = require("./routes/about/yearlyServicesRoutes");
 
 
+const visitorTracker = require("./controllers/visitor");
 
 
 
@@ -97,9 +101,9 @@ app.use(express.json({ extended: false }));
 app.use(
   cors({
     origin: [
-      // "http://localhost:3000",
+      "http://localhost:3000",
       "https://smartcliff.academy",
-      // "http://localhost:3535",
+      "http://localhost:3535",
       "https://smart-cliff-admin.vercel.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
@@ -163,7 +167,8 @@ app.use("/",companyRoutes)
 app.use("/",skillVerticalRoutes)
 
 app.use("/",footerRoutes);
-
+app.use("/",popUpRoutes)
+app.use("/",contactPageRoutes)
 // home
 app.use("/", homeServicesRoutes)
 app.use("/", homeExecutionHighlightsRoutes)
@@ -199,6 +204,7 @@ app.use("/",learningJourneyRoutes);
 app.use("/",wcyRoutes);
 app.use("/",howItWorksRoutes);
 app.use("/",currentAvialbilityRoutes);
+app.use("/api", visitorTracker);
 
 
 

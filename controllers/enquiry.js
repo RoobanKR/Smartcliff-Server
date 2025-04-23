@@ -176,3 +176,156 @@ exports.deleteEnquiry = async (req, res) => {
         res.status(500).json({ error: "Server error" });
     }
 };
+
+
+
+exports.sendResponseEmailEnquiry = async (req, res) => {
+    try {
+      const { subject, message, enquiryIds } = req.body;
+  
+      if (!subject || !message) {
+        return res.status(400).json({
+          message: [{ key: "error", value: "Subject and message are required" }],
+        });
+      }
+  
+      if (!enquiryIds || !Array.isArray(enquiryIds) || enquiryIds.length === 0) {
+        return res.status(400).json({
+          message: [{ key: "error", value: "At least one application ID is required" }],
+        });
+      }
+  
+      const applicants = await Enquiry.find({ _id: { $in: enquiryIds } });
+  
+      if (applicants.length === 0) {
+        return res.status(404).json({
+          message: [{ key: "error", value: "No applicants found with the provided IDs" }],
+        });
+      }
+  
+      const results = {
+        success: [],
+        failed: []
+      };
+  
+      for (const applicant of applicants) {
+        try {
+            const emailBody = `
+            <html>
+            <head>
+              <style>
+                body {
+                  font-family: Arial, sans-serif;
+                  background-color: #f9f9f9;
+                  margin: 0;
+                  padding: 30px;
+                }
+                .container {
+                  background-color: #ffffff;
+                  max-width: 600px;
+                  margin: 0 auto;
+                  padding: 25px;
+                  border-radius: 10px;
+                  box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+                }
+                h2 {
+                  color: #004aad;
+                  text-align: center;
+                }
+                p {
+                  color: #555;
+                  line-height: 1.6;
+                }
+                .response-box {
+                  background-color: #f1f4ff;
+                  border-left: 4px solid #004aad;
+                  padding: 15px;
+                  margin-top: 20px;
+                  font-size: 15px;
+                }
+                .footer {
+                  margin-top: 30px;
+                  font-size: 13px;
+                  color: #999;
+                  text-align: center;
+                }
+                .btn {
+                  display: inline-block;
+                  margin-top: 20px;
+                  padding: 10px 20px;
+                  background-color: #004aad;
+                  color: #fff;
+                  text-decoration: none;
+                  border-radius: 5px;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <h2>${subject}</h2>
+                <p>Dear ${applicant.name},</p>
+                <p>Thank you for reaching out to us via our contact form. We appreciate your interest and would like to respond as follows:</p>
+                
+                <div class="response-box">
+                  ${message}
+                </div>
+            
+                <p>If you have any further questions or concerns, feel free to reply to this email or visit our website below.</p>
+            
+                <div class="footer">
+                  <p><strong>SmartCliff Academy</strong></p>
+                  <p><a class="btn" href="https://smartcliff.academy/">Visit Website</a></p>
+                </div>
+              </div>
+            </body>
+            </html>
+            `;
+            
+  
+            await sendEmail(applicant.email, subject, emailBody);
+            results.success.push({
+              id: applicant._id,
+              from: req?.user?.email || process.env.NODEMAILER_FORM_EMAIL,
+              to: applicant.email, 
+              name: applicant.name,
+              email: applicant.email,
+              status: 'Success' // Store success status
+            });
+    
+            // Store email subject and body in the applicant's record
+            applicant.responseEmails.push({ 
+              from: req?.user?.email || process.env.NODEMAILER_FORM_EMAIL,
+              to: applicant.email, 
+              name: applicant.name, 
+              subject, 
+              body: message,
+              status: 'Success'
+            });
+            await applicant.save();
+          } catch (error) {
+            console.error(`Failed to send email to ${applicant.email}:`, error);
+            results.failed.push({
+              id: applicant._id,
+              name: applicant.name,
+              email: applicant.email,
+              error: error.message,
+              status: 'Failed' // Store failed status
+            });
+          }
+        }
+    
+      
+      return res.status(200).json({
+        message: [{ 
+          key: "success", 
+          value: `Emails sent successfully to ${results.success.length} applicants${results.failed.length > 0 ? `, failed for ${results.failed.length} applicants` : ''}`
+        }],
+        results
+      });
+    } catch (error) {
+      console.error("Send Email Error:", error);
+      return res.status(500).json({
+        message: [{ key: "error", value: "Internal server error" }],
+      });
+    }
+  }

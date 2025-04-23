@@ -1,18 +1,18 @@
-const YearlyService = require("../../models/about/YearlyServiceModal"); 
-
+const YearlyService = require("../../models/about/YearlyServiceModal");
+ 
 exports.createYearlyService = async (req, res) => {
   try {
     const { year, services } = req.body;
-
+ 
     if (!year || !services || !Array.isArray(services)) {
       return res.status(400).json({ message: [{ key: "error", value: "Year and services are required" }] });
     }
-
+ 
     const newYearlyService = new YearlyService({
       year,
       services,
     });
-
+ 
     await newYearlyService.save();
     return res.status(201).json({ message: [{ key: "success", value: "Yearly service created successfully" }] });
   } catch (error) {
@@ -20,7 +20,7 @@ exports.createYearlyService = async (req, res) => {
     return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };
-
+ 
 exports.getAllYearlyServices = async (req, res) => {
   try {
     const yearlyServices = await YearlyService.find();
@@ -33,7 +33,7 @@ exports.getAllYearlyServices = async (req, res) => {
     return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };
-
+ 
 exports.getYearlyServiceById = async (req, res) => {
   const { id } = req.params;
   try {
@@ -50,20 +50,30 @@ exports.getYearlyServiceById = async (req, res) => {
     return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };
-
+ 
 exports.updateYearlyService = async (req, res) => {
   const { id } = req.params;
   const { year, services } = req.body;
-
+ 
   try {
     const existingService = await YearlyService.findById(id);
     if (!existingService) {
       return res.status(404).json({ message: [{ key: "error", value: "Yearly service not found" }] });
     }
-
+ 
+    // Check if services is a string and parse it
+    if (services && typeof services === 'string') {
+      try {
+        existingService.services = JSON.parse(services);
+      } catch (parseError) {
+        return res.status(400).json({ message: [{ key: "error", value: "Invalid format for services" }] });
+      }
+    } else {
+      existingService.services = services || existingService.services;
+    }
+ 
     existingService.year = year || existingService.year;
-    existingService.services = services || existingService.services;
-
+ 
     await existingService.save();
     return res.status(200).json({
       message: [{ key: "success", value: "Yearly service updated successfully" }],
@@ -74,16 +84,16 @@ exports.updateYearlyService = async (req, res) => {
     return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };
-
+ 
 exports.deleteYearlyService = async (req, res) => {
   const { id } = req.params;
-
+ 
   try {
     const yearlyService = await YearlyService.findById(id);
     if (!yearlyService) {
       return res.status(404).json({ message: [{ key: "error", value: "Yearly service not found" }] });
     }
-
+ 
     await YearlyService.findByIdAndDelete(id);
     return res.status(200).json({
       message: [{ key: "success", value: "Yearly service deleted successfully" }],
@@ -93,3 +103,4 @@ exports.deleteYearlyService = async (req, res) => {
     return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
   }
 };
+ 
