@@ -14,7 +14,7 @@ exports.createHomeSerivesCount = async (req, res) => {
         count,
         service,
         slug,
-        // createdBy: req.user.email,
+        createdBy: req?.user?.email || "roobankr5@gmail.com",
         createdAt: new Date(),
       });
   
