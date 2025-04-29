@@ -87,7 +87,7 @@ const shineRoutes = require("./routes/about/shineRoutes");
 const yearlyServicesRoutes = require("./routes/about/yearlyServicesRoutes");
 
 
-const visitorTracker = require("./controllers/visitor");
+// const visitorTracker = require("./controllers/visitor");
 
 
 
@@ -101,9 +101,9 @@ app.use(express.json({ extended: false }));
 app.use(
   cors({
     origin: [
-      "http://localhost:3000",
+      // "http://localhost:3000",
       "https://smartcliff.academy",
-      "http://localhost:3535",
+      // "http://localhost:3535",
       "https://smart-cliff-admin.vercel.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
@@ -204,7 +204,7 @@ app.use("/",learningJourneyRoutes);
 app.use("/",wcyRoutes);
 app.use("/",howItWorksRoutes);
 app.use("/",currentAvialbilityRoutes);
-app.use("/api", visitorTracker);
+// app.use("/api", visitorTracker);
 
 
 
