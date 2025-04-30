@@ -43,6 +43,7 @@ const footerSchema = new mongoose.Schema({
   contact: {
     title: { type: String, default: "Contact" },
     phone: { type: String },
+    secondaryNumber: { type: String },
     address: { type: String }
   },
   

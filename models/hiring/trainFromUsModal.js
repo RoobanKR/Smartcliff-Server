@@ -31,7 +31,7 @@ const trainFromUsSchema = new mongoose.Schema({
   skillsetRequirements: { type: [skillSchema] },
   enquiry: {
     type: String,
-    required: true,
+   
   },
   createdAt: { type: Date },
 

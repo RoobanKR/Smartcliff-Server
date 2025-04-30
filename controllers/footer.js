@@ -55,6 +55,7 @@ exports.createFooter = async (req, res) => {
         contact: parsedContact || {
           title: "Contact",
           phone: "",
+          secondaryNumber: "",
           address: ""
         },
         lastModifiedBy: req.user ? req.user.username : 'roobankr5@gmail.com'
