@@ -33,7 +33,6 @@ const semesterRoutes = require("./routes/degreeProgram/semesterRoutes");
 const outcomeRoutes = require("./routes/degreeProgram/outcomeRoutes");
 const highlightRoutes = require("./routes/degreeProgram/highlightRoutes");
 const courseApplyNowRoutes = require("./routes/courseApplyNowRoutes");
-const programApplyRoutes = require("./routes/degreeProgram/ApplyProgramRoutes");
 const ourPartnersRoutes = require("./routes/degreeProgram/ourPartnersRoutes");
 const ourSponosrsRoutes = require("./routes/degreeProgram/ourSponosorsRoutes");
 const collegeRoutes = require("./routes/degreeProgram/collegeRoutes");
@@ -86,8 +85,7 @@ const visionMissionUsRoutes = require("./routes/about/visionmissionRoutes");
 const shineRoutes = require("./routes/about/shineRoutes");
 const yearlyServicesRoutes = require("./routes/about/yearlyServicesRoutes");
 
-
-// const visitorTracker = require("./controllers/visitor");
+const visitorTracker = require("./routes/visitorROutes");
 
 
 
@@ -141,7 +139,6 @@ app.use("/",semesterRoutes);
 app.use("/",outcomeRoutes);
 app.use("/",highlightRoutes);
 app.use("/",courseApplyNowRoutes);
-app.use("/",programApplyRoutes);
 app.use("/",servicesRoutes);
 app.use("/",companyLogoRoutes);
 app.use("/", executionHighlightRoutes)
@@ -204,7 +201,7 @@ app.use("/",learningJourneyRoutes);
 app.use("/",wcyRoutes);
 app.use("/",howItWorksRoutes);
 app.use("/",currentAvialbilityRoutes);
-// app.use("/api", visitorTracker);
+app.use("/visitors", visitorTracker);
 
 
 
