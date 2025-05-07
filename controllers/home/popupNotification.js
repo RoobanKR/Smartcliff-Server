@@ -4,7 +4,7 @@ const fs = require("fs");
 
 exports.createPopUpNotification = async (req, res) => {
   try {
-    const { title, description, link } = req.body;
+    const { title, description,button, link } = req.body;
 
     if (!title || !description) {
       return res.status(400).json({
@@ -43,6 +43,7 @@ exports.createPopUpNotification = async (req, res) => {
     const newPopUpNotification = new PopUpNotification({
       title,
       description,
+      button,
       link,
       image: uniqueFileName,
       createdAt: new Date(),

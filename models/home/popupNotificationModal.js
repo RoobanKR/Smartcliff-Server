@@ -6,6 +6,8 @@ const popupNotificationSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: {type: String,required: true},
   link: {type: String,},
+  button: {type: String,},
+
   image: {type: String,max: 5 * 1024 * 1024},
   isOpen: { type: Boolean,default:false },
 

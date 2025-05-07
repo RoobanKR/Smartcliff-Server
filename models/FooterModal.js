@@ -44,7 +44,8 @@ const footerSchema = new mongoose.Schema({
     title: { type: String, default: "Contact" },
     phone: { type: String },
     secondaryNumber: { type: String },
-    address: { type: String }
+    address: { type: String },
+    email: { type: String },
   },
   
   // Meta data

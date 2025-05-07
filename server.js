@@ -87,7 +87,7 @@ const yearlyServicesRoutes = require("./routes/about/yearlyServicesRoutes");
 
 const visitorTracker = require("./routes/visitorROutes");
 
-
+const addressRoutes = require("./routes/addressRoutes");
 
 const path = require("path");
 
@@ -202,6 +202,7 @@ app.use("/",wcyRoutes);
 app.use("/",howItWorksRoutes);
 app.use("/",currentAvialbilityRoutes);
 app.use("/visitors", visitorTracker);
+app.use("/", addressRoutes);
 
 
 
