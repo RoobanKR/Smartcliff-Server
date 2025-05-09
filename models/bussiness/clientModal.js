@@ -1,12 +1,10 @@
 const mongoose = require('mongoose')
 
-
-
 const serviceClientSchema = new mongoose.Schema({
 
   image: { type: String },
   name: { type: String },
-  type: { type: String, enum: ["trainfromus", "institute","smartcliff"] },
+  type: { type: String, enum: ["trainfromus", "institute","home"] },
 
   createdBy: { type: String },
   createdAt: { type: Date },
