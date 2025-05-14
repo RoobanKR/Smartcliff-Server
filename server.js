@@ -88,7 +88,7 @@ const yearlyServicesRoutes = require("./routes/about/yearlyServicesRoutes");
 const visitorTracker = require("./routes/visitorROutes");
 
 const addressRoutes = require("./routes/addressRoutes");
-
+const dbBenificiersRoutes = require("./routes/degreeProgram/dbBeneficiariesRoutes");
 const path = require("path");
 
 // Connect Database
@@ -162,6 +162,7 @@ app.use("/",certificationRoutes)
 app.use("/",companyRoutes)
 
 app.use("/",skillVerticalRoutes)
+app.use("/",dbBenificiersRoutes)
 
 app.use("/",footerRoutes);
 app.use("/",popUpRoutes)

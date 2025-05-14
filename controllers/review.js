@@ -5,7 +5,7 @@ const fs = require("fs");
 
 exports.createReview = async (req, res) => {
   try {
-    const { name, ratings, review, role, batch, lastModifiedBy } = req.body;
+    const { name, ratings, review,type, role, company,institution, lastModifiedBy } = req.body;
     let profileImage;
     let videoFile;
 
@@ -21,8 +21,8 @@ exports.createReview = async (req, res) => {
       await imageFile.mv(uploadPath);
       profileImage = uniqueFileName;
     } else {
-      const defaultImagePath = path.join(__dirname, "../uploads/default-profile.jpg");
-      const defaultFileName = `default_profile_${Date.now()}.jpg`;
+      const defaultImagePath = path.join(__dirname, "../uploads/review/default-profile.png");
+      const defaultFileName = `default_profile_${Date.now()}.png`;
       const newDefaultPath = path.join(__dirname, "../uploads/review/profiles", defaultFileName);
       try {
         fs.copyFileSync(defaultImagePath, newDefaultPath);
@@ -53,8 +53,10 @@ exports.createReview = async (req, res) => {
       name,
       ratings,
       review,
+      type,
       role,
-      batch,
+      company,
+      institution,
       profile: profileImage,
       video: videoFile,
       createdBy: req?.user?.email || "roobankr5@gmail.com",
@@ -141,7 +143,7 @@ exports.getReviewById = async (req, res) => {
 exports.updateReview = async (req, res) => {
   try {
     const reviewId = req.params.reviewId;
-    const { name, ratings, review, role, batch, lastModifiedBy } = req.body;
+    const { name, ratings, review,type,institution, role, company, lastModifiedBy } = req.body;
     const profileFile = req.files?.profile;
     const videoFile = req.files?.video;
 
@@ -180,16 +182,18 @@ exports.updateReview = async (req, res) => {
     existingReview.name = name || existingReview.name;
     existingReview.ratings = ratings || existingReview.ratings;
     existingReview.review = review || existingReview.review;
+    existingReview.type = type || existingReview.type;
+    existingReview.institution = institution || existingReview.institution;
     existingReview.role = role || existingReview.role;
-    existingReview.batch = batch || existingReview.batch;
+    existingReview.company = company || existingReview.company;
     existingReview.lastModifiedBy = lastModifiedBy || existingReview.lastModifiedBy;
     existingReview.lastModifiedOn = new Date();
 
     await existingReview.save();
 
-    return res.status(200).json({
-      message: [{ key: "success", value: "Review updated successfully" }],
-    });
+   return res.status(200).json({
+       message: [{ key: "success", value: "Review updated successfully" }],
+   });
   } catch (error) {
     console.error("Error updating review:", error);
     return res.status(500).json({

@@ -3,7 +3,8 @@ const mongoose = require('mongoose')
 const featureSchema = new mongoose.Schema({
   icon: { type: String },
   title: { type: String },
-  description: { type: String },
+  description: [{ type: String }],
+
 });
 
 

@@ -3,76 +3,95 @@ const path = require("path")
 const fs = require('fs');
 
 exports.createServiceAbout = async (req, res) => {
-    try {
-      const { heading, subHeading, feature, business_service, service } = req.body;
-  
-      const existingAbout = await ServiceAbout.findOne({ heading, service });
-      if (existingAbout) {
-        return res.status(403).json({ message: [{ key: "error", value: "Service About already exists" }] });
-      }
-  
-      let parsedFeatures = [];
-      if (feature) {
-        try {
-          parsedFeatures = JSON.parse(feature);
-        } catch (error) {
-          return res.status(400).json({ message: [{ key: "error", value: "Invalid feature format" }] });
-        }
-      }
-  
-      let formattedFeatures = parsedFeatures.map((f, index) => {
-        let featureIcon = null;
-        
-        if (req.files && req.files[`icon_${index}`]) {
-          const iconFile = req.files[`icon_${index}`];
-          featureIcon = `${Date.now()}_${iconFile.name}`;
-          const iconPath = path.join(__dirname, "../../uploads/services/about/icon", featureIcon);
-          
-          try {
-            iconFile.mv(iconPath);
-          } catch (err) {
-            console.error("Error saving icon:", err);
-            return res.status(500).json({ message: [{ key: "error", value: "Failed to upload feature icon" }] });
-          }
-        }
-        
-        return { ...f, icon: featureIcon };
-      });
-  
-      let uploadedImages = [];
-      if (req.files?.images) {
-        const imageFiles = Array.isArray(req.files.images) ? req.files.images : [req.files.images];
-        for (const imageFile of imageFiles) {
-          if (imageFile.size > 3 * 1024 * 1024) {
-            return res.status(400).json({ message: [{ key: "error", value: "One of the images exceeds the 3MB limit" }] });
-          }
-          const uniqueImageName = `${Date.now()}_${imageFile.name}`;
-          const uploadPath = path.join(__dirname, "../../uploads/services/about/images", uniqueImageName);
-          await imageFile.mv(uploadPath);
-          uploadedImages.push(uniqueImageName);
-        }
-      }
-  
-      const newServiceAbout = new ServiceAbout({
-        heading,
-        subHeading,
-        feature: formattedFeatures,
-        images: uploadedImages,
-        business_service,
-        service,
-        createdBy: req.user.email,
-        createdAt: new Date(),
-      });
-  
-      await newServiceAbout.save();
-      return res.status(201).json({ message: [{ key: "Success", value: "Service About Added Successfully" }] });
-  
-    } catch (error) {
-      console.error("Error creating service about:", error);
-      return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
+  try {
+    const { heading, subHeading, feature, business_service, service } = req.body;
+
+    const existingAbout = await ServiceAbout.findOne({ heading, service });
+    if (existingAbout) {
+      return res.status(403).json({ message: [{ key: "error", value: "Service About already exists" }] });
     }
-  };
-  
+
+    let parsedFeatures = [];
+    if (feature) {
+      try {
+        parsedFeatures = JSON.parse(feature);
+      } catch (error) {
+        return res.status(400).json({ message: [{ key: "error", value: "Invalid feature format" }] });
+      }
+    }
+
+    let formattedFeatures = parsedFeatures.map((f, index) => {
+      let featureIcon = null;
+      
+      if (req.files && req.files[`icon_${index}`]) {
+        const iconFile = req.files[`icon_${index}`];
+        featureIcon = `${Date.now()}_${iconFile.name}`;
+        const iconPath = path.join(__dirname, "../../uploads/services/about/icon", featureIcon);
+        
+        try {
+          iconFile.mv(iconPath);
+        } catch (err) {
+          console.error("Error saving icon:", err);
+          return res.status(500).json({ message: [{ key: "error", value: "Failed to upload feature icon" }] });
+        }
+      }
+
+      // Process multiple descriptions for each feature
+      let descriptions = [];
+      if (req.body[`description_${index}`]) {
+        // If description is sent as a single string, convert to array with one item
+        if (typeof req.body[`description_${index}`] === 'string') {
+          descriptions = [req.body[`description_${index}`]];
+        } 
+        // If descriptions are sent as an array
+        else if (Array.isArray(req.body[`description_${index}`])) {
+          descriptions = req.body[`description_${index}`];
+        }
+      } else if (f.description && Array.isArray(f.description)) {
+        // If descriptions are already in the parsed feature object
+        descriptions = f.description;
+      }
+      
+      return { 
+        ...f, 
+        icon: featureIcon,
+        description: descriptions 
+      };
+    });
+
+    let uploadedImages = [];
+    if (req.files?.images) {
+      const imageFiles = Array.isArray(req.files.images) ? req.files.images : [req.files.images];
+      for (const imageFile of imageFiles) {
+        if (imageFile.size > 3 * 1024 * 1024) {
+          return res.status(400).json({ message: [{ key: "error", value: "One of the images exceeds the 3MB limit" }] });
+        }
+        const uniqueImageName = `${Date.now()}_${imageFile.name}`;
+        const uploadPath = path.join(__dirname, "../../uploads/services/about/images", uniqueImageName);
+        await imageFile.mv(uploadPath);
+        uploadedImages.push(uniqueImageName);
+      }
+    }
+
+    const newServiceAbout = new ServiceAbout({
+      heading,
+      subHeading,
+      feature: formattedFeatures,
+      images: uploadedImages,
+      business_service,
+      service,
+      createdBy: req.user.email,
+      createdAt: new Date(),
+    });
+
+    await newServiceAbout.save();
+    return res.status(201).json({ message: [{ key: "Success", value: "Service About Added Successfully" }] });
+
+  } catch (error) {
+    console.error("Error creating service about:", error);
+    return res.status(500).json({ message: [{ key: "error", value: "Internal server error" }] });
+  }
+};
 
 
   exports.getAllServiceAbout = async (req, res) => {
