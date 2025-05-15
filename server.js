@@ -100,7 +100,7 @@ app.use(
   cors({
     origin: [
       // "http://localhost:3000",
-      "https://smartcliff.academy",
+      "https://www.smartcliff.academy",
       // "http://localhost:3535",
       "https://smart-cliff-admin.vercel.app"
     ],
