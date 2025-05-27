@@ -1,5 +1,4 @@
 {
-  "MONGOURI": "mongodb+srv://smartcliff:Mern%40143@cluster0.hkb7jhx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
   "JWT_TOKEN_KEY": "KJ9BK0DF098353NF09E230RH2039RH",
   "BASE_URL": "http://localhost:3000",
   "CLIENT_URL":"http://localhost:3535",
