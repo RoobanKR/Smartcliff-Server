@@ -173,7 +173,7 @@ exports.sendResponseEmailhireFromUs = async (req, res) => {
 
 exports.getAllHireFromUs = async (req, res) => {
   try {
-    const hiringApplications = await HireFromUs.find();
+    const hiringApplications = await HireFromUs.find().sort({ createdAt: -1 });
 
     return res.status(200).json({
       message: [

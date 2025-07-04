@@ -42,7 +42,7 @@ const transporter = nodemailer.createTransport({
 const sendEmail = async (receiverEmails, emailSubject, emailBody, ccEmails = []) => {
   try {
     const mailOptions = {
-      from: process.env.NODEMAILER_FORM_EMAIL,
+      from: process.env.ADMIN_EMAIL,
       to: receiverEmails,
       cc: ccEmails,
       subject: emailSubject,

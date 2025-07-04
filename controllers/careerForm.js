@@ -147,7 +147,7 @@ exports.createCareerForm = async (req, res) => {
 
 exports.getAllCareersForm = async (req, res) => {
   try {
-    const careers = await Career.find();
+    const careers = await Career.find().sort({ createdOn: -1 });
 
     if (!careers || careers.length === 0) {
       return res.status(404).json({

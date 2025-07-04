@@ -33,7 +33,7 @@ const trainFromUsSchema = new mongoose.Schema({
     type: String,
    
   },
-  createdAt: { type: Date },
+  createdAt: { type: Date,default: Date.now },
 
   responseEmails: [{
     from: { type: String, },

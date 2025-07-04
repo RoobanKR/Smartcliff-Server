@@ -108,7 +108,7 @@ exports.createTrainFromUs = async (req, res) => {
 
 exports.getAllTrainFromUs = async (req, res) => {
     try {
-      const trainApplications = await TrainFromUs.find();
+      const trainApplications = await TrainFromUs.find().sort({ createdAt: -1 });
   
       return res.status(200).json({
         message: [{ key: "success", value: "Successfully retrieved all training applications" }],

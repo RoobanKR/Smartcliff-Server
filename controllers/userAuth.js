@@ -13,74 +13,7 @@ const CLIENT_URL = config.get("CLIENT_URL");
 const path = require("path");
 const fs = require("fs");
 
-// For user sign up
-module.exports.SignUp = async (req, res) => {
-  try {
-    const { email, firstName, lastName, phone, password, role, gender, dob } =
-      req.body;
-    const existingUser = await User.findOne({ email });
 
-    if (existingUser) {
-      return res
-        .status(403)
-        .json({ message: [{ key: "error", value: "User already exists" }] });
-    }
-    if (!req.files || !req.files.profile_pic) {
-      return res.status(400).json({
-        message: [{ key: "error", value: "Image is required" }],
-      });
-    }
-
-    const profileFile = req.files.profile_pic;
-
-    if (profileFile.size > 3 * 1024 * 1024) {
-      return res.status(400).json({
-        message: [{ key: "error", value: "Image size exceeds the 3MB limit" }],
-      });
-    }
-
-    const uniqueFileName = `${Date.now()}_${profileFile.name}`;
-    const uploadPath = path.join(
-      __dirname,
-      "../uploads/user/profile",
-      uniqueFileName
-    );
-
-    await profileFile.mv(uploadPath);
-
-
-    const user = await User.create({
-      email,
-      firstName,
-      lastName,
-      phone,
-      password,
-      role,
-      gender,
-      dob,
-      profile_pic: uniqueFileName,
-    });
-
-    // FIXME: Remove user password before sending response
-
-    const token = createSecretToken(user._id);
-
-    res.status(201).json({
-      message: [{ key: "success", value: "User signed in successfully" }],
-      token: token,
-    });
-  } catch (error) {
-    var errors = [];
-    for (let types in error.errors) {
-      errors.push({
-        key: types,
-        value: error.errors[types].message,
-      });
-    }
-    res.status(400).json({ message: errors });
-    console.error(error);
-  }
-};
 
 // For user sign in
 module.exports.SignIn = async (req, res) => {

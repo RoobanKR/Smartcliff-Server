@@ -8,13 +8,8 @@ const userAuth = require("./routes/userAuth");
 const wcuRoutes = require("./routes/about/wcuRoutes");
 const faqRoutes = require("./routes/faqRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
-const careerOppertunitiesRoutes = require("./routes/careerOppertunitiesRoutes");
-const coursemodulesRoutes = require("./routes/courseModulesRoutes");
 const toolSoftwareRoutes = require("./routes/tool_SoftwareRoutes");
-const instructorRoutes = require("./routes/instructorRoutes");
 const courseRoutes = require("./routes/courseRoutes");
-const batchesRoutes = require("./routes/batchRoutes");
-const entrollBatchRoutes = require("./routes/entrollBatchRoutes");
 const enquiryRoutes = require("./routes/enquiryRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const careerFormRoutes = require("./routes/careerFormRoutes");
@@ -25,14 +20,9 @@ const careerRoutes = require("./routes/carrerRoutes");
 
 const degreeProgramRoutes = require("./routes/degreeProgram/degreeProgramRoutes");
 const ourProgramRoutes = require("./routes/degreeProgram/ourProgramRoutes");
-const admissionProcessRoutes = require("./routes/degreeProgram/admissionProcessRoutes");
 const targetStudentRoutes = require("./routes/degreeProgram/targetStudentRoutes");
-const programFeesRoutes = require("./routes/degreeProgram/programFeesRoutes");
-const eligibilityCriteriaRoutes = require("./routes/degreeProgram/eligibilityCriteriaRoutes");
 const semesterRoutes = require("./routes/degreeProgram/semesterRoutes");
 const outcomeRoutes = require("./routes/degreeProgram/outcomeRoutes");
-const highlightRoutes = require("./routes/degreeProgram/highlightRoutes");
-const courseApplyNowRoutes = require("./routes/courseApplyNowRoutes");
 const ourPartnersRoutes = require("./routes/degreeProgram/ourPartnersRoutes");
 const ourSponosrsRoutes = require("./routes/degreeProgram/ourSponosorsRoutes");
 const collegeRoutes = require("./routes/degreeProgram/collegeRoutes");
@@ -67,9 +57,7 @@ const trainFromUsRoutes = require("./routes/hiring/trainFromUsRoutes");
 const instituteRoutes = require("./routes/hiring/instituteFormRoutes");
 
 // business
-const keyElementsRoutes = require("./routes/bussiness/keyElementsRoutes");
 const businessPlacementsRoutes = require("./routes/bussiness/bussinessPlacementsRoutes");
-const engagedGovermenceRoutes = require("./routes/bussiness/engagedGovermanceRoutes");
 const learningJourneyRoutes = require("./routes/bussiness/learningJourneyRoutes");
 const wcyRoutes = require("./routes/bussiness/WCYHireRoutes");
 const howItWorksRoutes = require("./routes/bussiness/howItWorksRoutes");
@@ -100,7 +88,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://smartcliff.academy",
+      "https://smart-cliff-next-js.vercel.app",
       "http://localhost:3535",
       "https://smart-cliff-admin.vercel.app"
     ],
@@ -124,21 +112,13 @@ app.use("/", userAuth);
 app.use("/", wcuRoutes);
 app.use("/",faqRoutes);
 app.use("/",categoryRoutes);
-app.use("/",careerOppertunitiesRoutes);
-app.use("/",coursemodulesRoutes);
 app.use("/",toolSoftwareRoutes);
-app.use("/",instructorRoutes);
 app.use("/",courseRoutes);
 app.use("/",degreeProgramRoutes);
 app.use("/",ourProgramRoutes);
-app.use("/",admissionProcessRoutes);
 app.use("/",targetStudentRoutes);
-app.use("/",programFeesRoutes);
-app.use("/",eligibilityCriteriaRoutes);
 app.use("/",semesterRoutes);
 app.use("/",outcomeRoutes);
-app.use("/",highlightRoutes);
-app.use("/",courseApplyNowRoutes);
 app.use("/",servicesRoutes);
 app.use("/",companyLogoRoutes);
 app.use("/", executionHighlightRoutes)
@@ -146,8 +126,6 @@ app.use("/", executionOverviewRoutes)
 app.use("/", serviceTestimonialRoutes)
 app.use("/", serviceGalleryRoutes)
 app.use("/", managedCampusRoutes)
-app.use("/",entrollBatchRoutes);
-app.use("/", batchesRoutes)
 app.use("/", enquiryRoutes)
 app.use("/", contactRoutes)
 app.use("/", careerFormRoutes)
@@ -195,9 +173,7 @@ app.use("/",trainFromUsRoutes);
 app.use("/",instituteRoutes);
 
 // business
-app.use("/",keyElementsRoutes);
 app.use("/",businessPlacementsRoutes);
-app.use("/",engagedGovermenceRoutes);
 app.use("/",learningJourneyRoutes);
 app.use("/",wcyRoutes);
 app.use("/",howItWorksRoutes);

@@ -112,7 +112,7 @@ exports.createInstituteForm = async (req, res) => {
 // Optional: Add other CRUD operations
 exports.getAllInstituteFormApplications = async (req, res) => {
     try {
-      const instituteApplications = await InstituteForm.find();
+      const instituteApplications = await InstituteForm.find().sort({ createdAt: -1 });
   
       return res.status(200).json({
         message: [{ key: "success", value: "Successfully retrieved all trInstituteaining applications" }],

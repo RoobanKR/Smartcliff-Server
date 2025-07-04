@@ -21,8 +21,6 @@ const {
   getUserById,
   updateAdmin,
   updateSuperAdmin,
-  createTrainee,
-  updateTrainee,
 
 } = require('../controllers/userAuth.js')
 
@@ -30,8 +28,6 @@ const { userAuth } = require('../middlewares/userAuth.js')
 const { userRole } = require('../middlewares/userRole.js')
 
 // User
-
-router.post('/SignUp', SignUp)
 router.post('/SignIn', SignIn)
 router.post('/Logout',userAuth, Logout)
 router.get('/getUsers',userAuth,userRole(['admin', 'super_admin']), getUsers)

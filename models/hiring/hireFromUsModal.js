@@ -30,7 +30,7 @@ const hiringFromUsSchema = new mongoose.Schema({
   skillsetRequirements: { type: [skillSchema] },
 
   enquiry: { type: String, required: true},
-  createdAt: { type: Date },
+  createdAt: { type: Date, default: Date.now },
 
   responseEmails: [{
     from: { type: String, },
